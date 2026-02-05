@@ -77,6 +77,8 @@ export class GameManager {
         scene.load.audio('zombie_hurt', '/assets/audio/zombie_hurt.ogg');
         scene.load.audio('zombie_attack', '/assets/audio/zombie_attack.ogg');
         scene.load.audio('weapon_switch', '/assets/audio/weapon_switch.ogg');
+        scene.load.audio('wave_complete', '/assets/audio/wave_complete.ogg');
+        scene.load.audio('player_hurt', '/assets/audio/player_hurt.ogg');
 
         // Fallback: create textures if SVG loading fails
         scene.load.on('loaderror', (file) => {
@@ -328,6 +330,11 @@ export class GameManager {
     updatePlayer(data) {
         const player = this.players[data.id];
         if (!player) return;
+
+        // Check if player took damage (for sound)
+        if (data.id === this.myId && player.data && data.hp < player.data.hp && !data.is_dead) {
+            this.playSound('player_hurt', 0.4);
+        }
 
         // Set target for smooth interpolation
         player.targetX = this.scaleX(data.x);
