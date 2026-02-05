@@ -185,10 +185,36 @@ function setupEventListeners() {
     });
 
     document.getElementById('btn-wave-shop').addEventListener('click', () => {
-        // Hide wave complete, show shop (timer continues in background)
+        // Hide wave complete, show shop (can still ready from shop)
         hideScreen('wave-complete');
         showInGameShop();
     });
+
+    // Ready button on wave complete screen
+    document.getElementById('btn-next-wave').addEventListener('click', () => {
+        sendReady();
+    });
+
+    // Ready button in shop
+    document.getElementById('btn-shop-ready').addEventListener('click', () => {
+        sendReady();
+    });
+}
+
+function sendReady() {
+    if (window.VELLA.ws && window.VELLA.inWaveBreak) {
+        window.VELLA.ws.send({ type: 'ready', is_ready: true });
+
+        // Update button states
+        const waveReadyBtn = document.getElementById('btn-next-wave');
+        waveReadyBtn.textContent = '✓ Ready!';
+        waveReadyBtn.classList.add('ready');
+        waveReadyBtn.disabled = true;
+
+        const shopReadyBtn = document.getElementById('btn-shop-ready');
+        shopReadyBtn.textContent = '✓ Ready!';
+        shopReadyBtn.disabled = true;
+    }
 }
 
 function showRoomsBrowser() {
@@ -314,14 +340,15 @@ function setupRoomHandlers() {
 
     window.VELLA.ws.on('wave_start', (data) => {
         hideScreen('wave-complete');
+        hideScreen('shop-screen');
+        window.VELLA.inWaveBreak = false;
+        window.VELLA.inGameShop = false;
+        document.getElementById('shop-ready-bar').classList.add('hidden');
+
         // Clear countdowns if still running
         if (window.VELLA.countdownInterval) {
             clearInterval(window.VELLA.countdownInterval);
             window.VELLA.countdownInterval = null;
-        }
-        if (window.VELLA.waveBreakInterval) {
-            clearInterval(window.VELLA.waveBreakInterval);
-            window.VELLA.waveBreakInterval = null;
         }
         showWaveAnnouncement(data.wave, data.zombie_count);
     });
@@ -454,6 +481,7 @@ function showWaveCountdown(wave, seconds) {
 function showWaveComplete(data) {
     document.getElementById('complete-wave').textContent = data.wave;
     document.getElementById('wave-bonus').textContent = data.bonus_coins;
+    document.getElementById('next-wave-num').textContent = data.next_wave;
 
     // Play wave complete sound
     window.playSound('wave_complete', 0.5);
@@ -464,26 +492,17 @@ function showWaveComplete(data) {
         document.getElementById('hud-coins').textContent = window.VELLA.game.coins;
     }
 
-    // Start countdown timer
-    let timeLeft = data.break_time || 10;
-    document.getElementById('wave-break-timer').textContent = Math.ceil(timeLeft);
+    // Reset ready button state
+    const readyBtn = document.getElementById('btn-next-wave');
+    readyBtn.textContent = '✓ Ready';
+    readyBtn.classList.remove('ready');
+    readyBtn.disabled = false;
 
-    // Clear any existing countdown
-    if (window.VELLA.waveBreakInterval) {
-        clearInterval(window.VELLA.waveBreakInterval);
-    }
+    // Show shop ready bar
+    document.getElementById('shop-ready-bar').classList.remove('hidden');
 
-    window.VELLA.waveBreakInterval = setInterval(() => {
-        timeLeft -= 0.1;
-        const display = Math.ceil(timeLeft);
-        document.getElementById('wave-break-timer').textContent = display > 0 ? display : 0;
-
-        if (timeLeft <= 0) {
-            clearInterval(window.VELLA.waveBreakInterval);
-            window.VELLA.waveBreakInterval = null;
-            // Wave will start automatically via server state
-        }
-    }, 100);
+    // Mark that we're in wave break
+    window.VELLA.inWaveBreak = true;
 
     showScreen('wave-complete');
 }

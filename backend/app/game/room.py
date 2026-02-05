@@ -60,7 +60,6 @@ class Room:
     TICK_RATE = 20  # ticks per second
     MAX_PLAYERS = 10
     WAVE_COUNTDOWN = 3.0  # seconds before wave starts
-    WAVE_BREAK_TIME = 10.0  # seconds between waves for shop
 
     def __init__(self, room_code: str, is_public: bool = False):
         self.room_code = room_code
@@ -79,7 +78,6 @@ class Room:
 
         self.tick = 0
         self.countdown = 0.0
-        self.wave_break_timer = 0.0  # Timer for between-wave break
         self.is_running = False
 
         # Stats
@@ -174,16 +172,7 @@ class Room:
         """
         events = []
 
-        if self.status == "wave_break":
-            # Between waves - timer counts down, then auto-starts next wave
-            self.wave_break_timer -= dt
-            if self.wave_break_timer <= 0:
-                # Start countdown for next wave
-                self.status = "countdown"
-                self.countdown = self.WAVE_COUNTDOWN
-                print(f"[Room {self.room_code}] Wave break ended, starting countdown")
-
-        elif self.status == "countdown":
+        if self.status == "countdown":
             self.countdown -= dt
             if self.countdown <= 0:
                 self.status = "playing"
@@ -244,24 +233,23 @@ class Room:
                     for p in alive_players:
                         p.coins_earned += bonus_per_player
 
-                # Go to wave break - automatic timer, no waiting for ready
+                # Go to wave break - wait for all players to ready up
                 self.status = "wave_break"
-                self.wave_break_timer = self.WAVE_BREAK_TIME
                 self.wave_manager.wave_active = False
 
-                # Heal all players between waves
+                # Reset ready status and heal all players
                 for p in self.players.values():
+                    p.is_ready = False
                     p.hp = p.max_hp
                     p.is_dead = False
 
-                print(f"[Room {self.room_code}] Wave {self.wave_manager.current_wave} complete! {self.WAVE_BREAK_TIME}s break...")
+                print(f"[Room {self.room_code}] Wave {self.wave_manager.current_wave} complete! Waiting for ready...")
 
                 events.append({
                     "type": "wave_complete",
                     "wave": self.wave_manager.current_wave,
                     "bonus_coins": bonus,
-                    "next_wave": self.wave_manager.current_wave + 1,
-                    "break_time": self.WAVE_BREAK_TIME
+                    "next_wave": self.wave_manager.current_wave + 1
                 })
 
             # Check game over (all dead)
@@ -378,6 +366,17 @@ class Room:
 
     def get_state(self) -> dict:
         """Get current game state for sync"""
+        # Build ready status for wave break
+        ready_info = None
+        if self.status == "wave_break":
+            ready_count = sum(1 for p in self.players.values() if p.is_ready)
+            total_count = len(self.players)
+            ready_info = {
+                "ready_count": ready_count,
+                "total_count": total_count,
+                "all_ready": ready_count == total_count and total_count > 0
+            }
+
         return {
             "type": "state",
             "tick": self.tick,
@@ -387,7 +386,7 @@ class Room:
             "projectiles": [p.to_state() for p in self.projectiles.values()],
             "wave": self.wave_manager.current_wave,
             "wave_countdown": self.countdown if self.status == "countdown" else None,
-            "wave_break_remaining": round(self.wave_break_timer, 1) if self.status == "wave_break" else None,
+            "ready_info": ready_info,
             "zombies_remaining": self.wave_manager.zombies_remaining + len(self.zombies)
         }
 

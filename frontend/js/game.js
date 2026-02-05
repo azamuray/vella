@@ -286,13 +286,18 @@ export class GameManager {
         document.getElementById('hud-wave').textContent = state.wave;
         document.getElementById('hud-zombies').textContent = state.zombies_remaining;
 
-        // Sync wave break timer from server
-        if (state.wave_break_remaining !== null && state.wave_break_remaining !== undefined) {
-            document.getElementById('wave-break-timer').textContent = Math.ceil(state.wave_break_remaining);
+        // Update ready status during wave break
+        if (state.ready_info) {
+            const statusText = `${state.ready_info.ready_count}/${state.ready_info.total_count} players ready`;
+            document.getElementById('ready-status').textContent = statusText;
+            document.getElementById('shop-ready-status').textContent = statusText;
         }
 
-        // Auto-hide wave complete when countdown starts
+        // Auto-hide wave complete when countdown/playing starts
         if (state.status === 'countdown' || state.status === 'playing') {
+            window.VELLA.inWaveBreak = false;
+            document.getElementById('shop-ready-bar').classList.add('hidden');
+
             const waveCompleteEl = document.getElementById('wave-complete');
             if (!waveCompleteEl.classList.contains('hidden')) {
                 waveCompleteEl.classList.add('hidden');

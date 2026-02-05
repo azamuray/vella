@@ -104,6 +104,12 @@
                 <div class="coins">💰 <span id="shop-coins">0</span></div>
             </div>
 
+            <!-- Ready button in shop (only visible during wave break) -->
+            <div id="shop-ready-bar" class="shop-ready-bar hidden">
+                <span id="shop-ready-status">Waiting...</span>
+                <button class="btn btn-primary btn-sm" id="btn-shop-ready">✓ Ready</button>
+            </div>
+
             <div class="weapons-grid" id="weapons-list">
                 <!-- Weapons will be added here -->
             </div>
@@ -180,8 +186,12 @@
         <div class="wave-complete-container">
             <h2>Wave <span id="complete-wave">1</span> Complete!</h2>
             <div class="wave-bonus">+<span id="wave-bonus">50</span> coins</div>
-            <p class="next-wave-text">Next wave in <span id="wave-break-timer">10</span>s</p>
+            <p class="next-wave-text">Next: Wave <span id="next-wave-num">2</span></p>
+            <p class="ready-status" id="ready-status">Waiting for players...</p>
             <div class="wave-complete-buttons">
+                <button class="btn btn-primary" id="btn-next-wave">
+                    ✓ Ready
+                </button>
                 <button class="btn btn-secondary" id="btn-wave-shop">
                     🔫 Shop
                 </button>
@@ -217,6 +227,6 @@
         </div>
     </div>
 
-    <script type="module" src="/js/main.js?v=15"></script>
+    <script type="module" src="/js/main.js?v=16"></script>
 </body>
 </html>
