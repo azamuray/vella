@@ -675,11 +675,22 @@ async function buyWeapon(code) {
             const result = await response.json();
             window.VELLA.player.coins = result.coins;
 
+            // Update in-game coins too
+            if (window.VELLA.game) {
+                window.VELLA.game.coins = result.coins;
+            }
+
             // Play purchase sound
             window.playSound('weapon_switch', 0.5);
 
             await loadPlayerData();
-            showShop(); // Refresh
+
+            // Refresh shop (keep inGameShop state)
+            if (window.VELLA.inGameShop) {
+                showInGameShop();
+            } else {
+                showShop();
+            }
         }
     } catch (error) {
         console.error('Failed to buy weapon:', error);
@@ -714,7 +725,12 @@ async function buyWithStars(code) {
                 window.playSound('weapon_switch', 0.5);
                 alert('Purchase successful! 🎉');
                 await loadPlayerData();
-                showShop(); // Refresh
+                // Refresh shop (keep inGameShop state)
+                if (window.VELLA.inGameShop) {
+                    showInGameShop();
+                } else {
+                    showShop();
+                }
             } else if (status === 'failed') {
                 alert('Payment failed');
             }
@@ -743,7 +759,12 @@ async function equipWeapon(code) {
                 window.VELLA.ws.send({ type: 'switch_weapon', weapon_code: code });
             }
 
-            showShop(); // Refresh
+            // Refresh shop (keep inGameShop state)
+            if (window.VELLA.inGameShop) {
+                showInGameShop();
+            } else {
+                showShop();
+            }
         }
     } catch (error) {
         console.error('Failed to equip weapon:', error);
