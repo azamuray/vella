@@ -365,6 +365,10 @@ export class GameManager {
             const reloadBar = document.getElementById('reload-bar');
             const reloadFill = document.getElementById('reload-fill');
             if (data.reloading) {
+                // Play reload sound when reload starts
+                if (!player.data?.reloading) {
+                    this.playSound('weapon_switch', 0.3); // Use weapon_switch as reload sound
+                }
                 reloadBar.classList.remove('hidden');
                 reloadFill.style.width = `${data.reload_progress * 100}%`;
             } else {

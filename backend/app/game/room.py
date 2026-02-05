@@ -323,6 +323,13 @@ class Room:
                             "zombie_type": zombie.type
                         })
                         del self.zombies[zombie.id]
+                    else:
+                        # Zombie hurt but alive
+                        events.append({
+                            "type": "zombie_hurt",
+                            "zombie_id": zombie.id,
+                            "damage": damage_to_deal
+                        })
 
                     # Subtract zombie's HP from remaining damage
                     proj.remaining_damage -= zombie_hp_before

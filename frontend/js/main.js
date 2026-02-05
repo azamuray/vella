@@ -19,6 +19,21 @@ window.VELLA = {
     ui: null
 };
 
+// Global audio player (works without Phaser game)
+window.playSound = function(name, volume = 0.5) {
+    // Try Phaser first
+    if (window.VELLA.game) {
+        window.VELLA.game.playSound(name, volume);
+        return;
+    }
+    // Fallback to HTML5 Audio
+    try {
+        const audio = new Audio(`/assets/audio/${name}.ogg`);
+        audio.volume = volume;
+        audio.play().catch(() => {}); // Ignore autoplay errors
+    } catch (e) {}
+};
+
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('VELLA initializing...');
@@ -252,6 +267,11 @@ async function joinRoom(roomCode) {
         }
     });
 
+    window.VELLA.ws.on('zombie_hurt', (data) => {
+        // Play zombie hurt sound
+        window.playSound('zombie_hurt', 0.3);
+    });
+
     window.VELLA.ws.on('player_died', (data) => {
         if (window.VELLA.game) {
             window.VELLA.game.onPlayerDied(data);
@@ -330,9 +350,7 @@ function showWaveAnnouncement(wave, zombieCount) {
     document.getElementById('announce-zombies').textContent = `${zombieCount} zombies incoming`;
 
     // Play wave start sound (zombie growl)
-    if (window.VELLA.game) {
-        window.VELLA.game.playSound('zombie_attack', 0.6);
-    }
+    window.playSound('zombie_attack', 0.6);
 
     el.classList.remove('hidden');
     setTimeout(() => {
@@ -371,9 +389,7 @@ function showWaveComplete(data) {
     document.getElementById('next-wave').textContent = data.next_wave;
 
     // Play wave complete sound
-    if (window.VELLA.game) {
-        window.VELLA.game.playSound('wave_complete', 0.5);
-    }
+    window.playSound('wave_complete', 0.5);
 
     // Update player coins display
     if (window.VELLA.game) {
@@ -527,9 +543,7 @@ async function buyWeapon(code) {
             window.VELLA.player.coins = result.coins;
 
             // Play purchase sound
-            if (window.VELLA.game) {
-                window.VELLA.game.playSound('weapon_switch', 0.5);
-            }
+            window.playSound('weapon_switch', 0.5);
 
             await loadPlayerData();
             showShop(); // Refresh
@@ -549,9 +563,7 @@ async function equipWeapon(code) {
             window.VELLA.player.equipped_weapon = code;
 
             // Play weapon switch sound
-            if (window.VELLA.game) {
-                window.VELLA.game.playSound('weapon_switch', 0.4);
-            }
+            window.playSound('weapon_switch', 0.4);
 
             // Also switch weapon in active game session
             if (window.VELLA.ws?.isConnected) {
