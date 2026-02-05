@@ -285,6 +285,19 @@ export class GameManager {
         // Update HUD
         document.getElementById('hud-wave').textContent = state.wave;
         document.getElementById('hud-zombies').textContent = state.zombies_remaining;
+
+        // Sync wave break timer from server
+        if (state.wave_break_remaining !== null && state.wave_break_remaining !== undefined) {
+            document.getElementById('wave-break-timer').textContent = Math.ceil(state.wave_break_remaining);
+        }
+
+        // Auto-hide wave complete when countdown starts
+        if (state.status === 'countdown' || state.status === 'playing') {
+            const waveCompleteEl = document.getElementById('wave-complete');
+            if (!waveCompleteEl.classList.contains('hidden')) {
+                waveCompleteEl.classList.add('hidden');
+            }
+        }
     }
 
     createPlayer(data) {

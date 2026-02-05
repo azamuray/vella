@@ -110,28 +110,24 @@ function getWeaponDisplayName(code) {
 }
 
 function setupEventListeners() {
-    // Play button
-    document.getElementById('btn-play').addEventListener('click', () => {
-        joinRoom(null);
+    // Create room button
+    document.getElementById('btn-create-room').addEventListener('click', () => {
+        createRoom();
     });
 
-    // Join room button
-    document.getElementById('btn-join').addEventListener('click', () => {
-        showModal('join-modal');
+    // Browse rooms button
+    document.getElementById('btn-browse-rooms').addEventListener('click', () => {
+        showRoomsBrowser();
     });
 
-    // Join confirm
-    document.getElementById('btn-join-confirm').addEventListener('click', () => {
-        const code = document.getElementById('input-room-code').value.toUpperCase().trim();
-        if (code.length === 6) {
-            hideModal('join-modal');
-            joinRoom(code);
-        }
+    // Rooms refresh
+    document.getElementById('btn-rooms-refresh').addEventListener('click', () => {
+        loadPublicRooms();
     });
 
-    // Join cancel
-    document.getElementById('btn-join-cancel').addEventListener('click', () => {
-        hideModal('join-modal');
+    // Rooms cancel
+    document.getElementById('btn-rooms-cancel').addEventListener('click', () => {
+        hideModal('rooms-modal');
     });
 
     // Shop button
@@ -181,13 +177,6 @@ function setupEventListeners() {
         loadPlayerData();
     });
 
-    // Wave complete buttons
-    document.getElementById('btn-next-wave').addEventListener('click', () => {
-        if (window.VELLA.ws) {
-            window.VELLA.ws.send({ type: 'ready', is_ready: true });
-        }
-    });
-
     // Debug: Kill all zombies
     document.getElementById('btn-kill-all').addEventListener('click', () => {
         if (window.VELLA.ws) {
@@ -196,10 +185,72 @@ function setupEventListeners() {
     });
 
     document.getElementById('btn-wave-shop').addEventListener('click', () => {
-        // Hide wave complete, show shop (but keep game in background)
+        // Hide wave complete, show shop (timer continues in background)
         hideScreen('wave-complete');
         showInGameShop();
     });
+}
+
+function showRoomsBrowser() {
+    showModal('rooms-modal');
+    loadPublicRooms();
+}
+
+async function loadPublicRooms() {
+    const listEl = document.getElementById('rooms-list');
+    listEl.innerHTML = '<p class="loading-rooms">Loading...</p>';
+
+    try {
+        const response = await fetch('/api/rooms');
+        const rooms = await response.json();
+
+        if (rooms.length === 0) {
+            listEl.innerHTML = '<p class="no-rooms">No public rooms available.<br>Create your own!</p>';
+            return;
+        }
+
+        listEl.innerHTML = '';
+        for (const room of rooms) {
+            const item = document.createElement('div');
+            item.className = 'room-item';
+            item.innerHTML = `
+                <div class="room-info">
+                    <div class="room-host">${room.host || 'Unknown'}</div>
+                    <div class="room-players">${room.player_count}/${room.max_players} players</div>
+                </div>
+                <button class="btn btn-primary btn-join-room" data-code="${room.room_code}">Join</button>
+            `;
+            listEl.appendChild(item);
+        }
+
+        // Add click handlers
+        listEl.querySelectorAll('.btn-join-room').forEach(btn => {
+            btn.addEventListener('click', () => {
+                hideModal('rooms-modal');
+                joinRoom(btn.dataset.code);
+            });
+        });
+    } catch (error) {
+        listEl.innerHTML = '<p class="no-rooms">Failed to load rooms</p>';
+        console.error('Failed to load rooms:', error);
+    }
+}
+
+async function createRoom() {
+    hideScreen('menu-screen');
+    showScreen('lobby-screen');
+
+    // Connect WebSocket
+    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws?init_data=${encodeURIComponent(window.VELLA.initData)}`;
+
+    window.VELLA.ws = new WebSocketManager(wsUrl);
+
+    window.VELLA.ws.on('open', () => {
+        window.VELLA.ws.send({ type: 'create_room', is_public: true });
+    });
+
+    setupRoomHandlers();
+    window.VELLA.ws.connect();
 }
 
 async function joinRoom(roomCode) {
@@ -215,9 +266,29 @@ async function joinRoom(roomCode) {
         window.VELLA.ws.send({ type: 'join_room', room_code: roomCode });
     });
 
+    setupRoomHandlers();
+    window.VELLA.ws.connect();
+}
+
+function setupRoomHandlers() {
+    window.VELLA.ws.on('room_created', (data) => {
+        document.getElementById('room-code').textContent = data.room_code;
+        updateLobbyPlayers(data.players);
+    });
+
     window.VELLA.ws.on('room_joined', (data) => {
         document.getElementById('room-code').textContent = data.room_code;
         updateLobbyPlayers(data.players);
+    });
+
+    window.VELLA.ws.on('error', (data) => {
+        alert(data.message || 'Error');
+        hideScreen('lobby-screen');
+        showScreen('menu-screen');
+        if (window.VELLA.ws) {
+            window.VELLA.ws.disconnect();
+            window.VELLA.ws = null;
+        }
     });
 
     window.VELLA.ws.on('lobby_update', (data) => {
@@ -243,10 +314,14 @@ async function joinRoom(roomCode) {
 
     window.VELLA.ws.on('wave_start', (data) => {
         hideScreen('wave-complete');
-        // Clear countdown if still running
+        // Clear countdowns if still running
         if (window.VELLA.countdownInterval) {
             clearInterval(window.VELLA.countdownInterval);
             window.VELLA.countdownInterval = null;
+        }
+        if (window.VELLA.waveBreakInterval) {
+            clearInterval(window.VELLA.waveBreakInterval);
+            window.VELLA.waveBreakInterval = null;
         }
         showWaveAnnouncement(data.wave, data.zombie_count);
     });
@@ -280,8 +355,6 @@ async function joinRoom(roomCode) {
     window.VELLA.ws.on('close', () => {
         console.log('WebSocket closed');
     });
-
-    window.VELLA.ws.connect();
 }
 
 function leaveRoom() {
@@ -381,7 +454,6 @@ function showWaveCountdown(wave, seconds) {
 function showWaveComplete(data) {
     document.getElementById('complete-wave').textContent = data.wave;
     document.getElementById('wave-bonus').textContent = data.bonus_coins;
-    document.getElementById('next-wave').textContent = data.next_wave;
 
     // Play wave complete sound
     window.playSound('wave_complete', 0.5);
@@ -391,6 +463,27 @@ function showWaveComplete(data) {
         window.VELLA.game.coins += data.bonus_coins;
         document.getElementById('hud-coins').textContent = window.VELLA.game.coins;
     }
+
+    // Start countdown timer
+    let timeLeft = data.break_time || 10;
+    document.getElementById('wave-break-timer').textContent = Math.ceil(timeLeft);
+
+    // Clear any existing countdown
+    if (window.VELLA.waveBreakInterval) {
+        clearInterval(window.VELLA.waveBreakInterval);
+    }
+
+    window.VELLA.waveBreakInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        const display = Math.ceil(timeLeft);
+        document.getElementById('wave-break-timer').textContent = display > 0 ? display : 0;
+
+        if (timeLeft <= 0) {
+            clearInterval(window.VELLA.waveBreakInterval);
+            window.VELLA.waveBreakInterval = null;
+            // Wave will start automatically via server state
+        }
+    }, 100);
 
     showScreen('wave-complete');
 }

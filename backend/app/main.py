@@ -463,9 +463,57 @@ async def websocket_endpoint(
             data = await websocket.receive_json()
             msg_type = data.get("type")
 
-            if msg_type == "join_room":
+            if msg_type == "create_room":
+                # Create a new room (public or private)
+                is_public = data.get("is_public", True)
+                room = engine.room_manager.create_room(is_public=is_public)
+                player = room.add_player(telegram_id, username, websocket)
+
+                # Set player's equipped weapon from DB
+                async with async_session() as db:
+                    result = await db.execute(
+                        select(PlayerWeapon, Weapon)
+                        .join(Weapon)
+                        .where(PlayerWeapon.player_id == telegram_id)
+                        .where(PlayerWeapon.equipped == True)
+                    )
+                    row = result.first()
+                    if row:
+                        player.switch_weapon(row[1].code)
+
+                await websocket.send_json({
+                    "type": "room_created",
+                    "room_code": room.room_code,
+                    "is_public": room.is_public,
+                    "players": [p.to_lobby_state() for p in room.players.values()],
+                    "your_id": telegram_id
+                })
+                print(f"[Room] Created {'public' if is_public else 'private'} room {room.room_code} by {username}")
+
+            elif msg_type == "join_room":
                 room_code = data.get("room_code")
-                room = engine.get_room(room_code)
+                room = engine.room_manager.get_room(room_code)
+
+                if not room:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Room not found"
+                    })
+                    continue
+
+                if room.is_full:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Room is full"
+                    })
+                    continue
+
+                if room.status != "lobby":
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Game already in progress"
+                    })
+                    continue
 
                 player = room.add_player(telegram_id, username, websocket)
 
@@ -605,13 +653,20 @@ async def websocket_endpoint(
 
 @app.get("/api/rooms")
 async def list_rooms():
-    """List available rooms (for debugging)"""
+    """List public rooms available to join"""
+    return engine.room_manager.get_public_rooms()
+
+
+@app.get("/api/rooms/all")
+async def list_all_rooms():
+    """List all rooms (for debugging)"""
     return [
         {
             "code": room.room_code,
             "players": room.player_count,
             "status": room.status,
-            "wave": room.wave_manager.current_wave
+            "wave": room.wave_manager.current_wave,
+            "is_public": room.is_public
         }
         for room in engine.room_manager.rooms.values()
     ]

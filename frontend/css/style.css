@@ -793,3 +793,59 @@ html, body {
     font-style: italic;
     margin-top: 4px;
 }
+
+/* Rooms Browser Modal */
+.rooms-modal {
+    max-width: 380px;
+}
+
+.rooms-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 1rem 0;
+}
+
+.room-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--secondary);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.room-item:last-child {
+    margin-bottom: 0;
+}
+
+.room-info {
+    text-align: left;
+}
+
+.room-host {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.room-players {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.room-item .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.no-rooms {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 2rem 1rem;
+}
+
+.loading-rooms {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 2rem 1rem;
+}

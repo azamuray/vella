@@ -59,11 +59,13 @@ class Room:
     GAME_HEIGHT = 1080
     TICK_RATE = 20  # ticks per second
     MAX_PLAYERS = 10
-    WAVE_COUNTDOWN = 3.0  # seconds between waves
+    WAVE_COUNTDOWN = 3.0  # seconds before wave starts
+    WAVE_BREAK_TIME = 10.0  # seconds between waves for shop
 
-    def __init__(self, room_code: str):
+    def __init__(self, room_code: str, is_public: bool = False):
         self.room_code = room_code
-        self.status = "lobby"  # lobby, countdown, playing, finished
+        self.is_public = is_public
+        self.status = "lobby"  # lobby, countdown, wave_break, playing, finished
 
         # Players
         self.players: Dict[int, PlayerEntity] = {}
@@ -77,6 +79,7 @@ class Room:
 
         self.tick = 0
         self.countdown = 0.0
+        self.wave_break_timer = 0.0  # Timer for between-wave break
         self.is_running = False
 
         # Stats
@@ -171,7 +174,16 @@ class Room:
         """
         events = []
 
-        if self.status == "countdown":
+        if self.status == "wave_break":
+            # Between waves - timer counts down, then auto-starts next wave
+            self.wave_break_timer -= dt
+            if self.wave_break_timer <= 0:
+                # Start countdown for next wave
+                self.status = "countdown"
+                self.countdown = self.WAVE_COUNTDOWN
+                print(f"[Room {self.room_code}] Wave break ended, starting countdown")
+
+        elif self.status == "countdown":
             self.countdown -= dt
             if self.countdown <= 0:
                 self.status = "playing"
@@ -232,24 +244,24 @@ class Room:
                     for p in alive_players:
                         p.coins_earned += bonus_per_player
 
-                # Go to wave break - wait for players to ready up
+                # Go to wave break - automatic timer, no waiting for ready
                 self.status = "wave_break"
+                self.wave_break_timer = self.WAVE_BREAK_TIME
                 self.wave_manager.wave_active = False
 
-                # Reset all players' ready status
+                # Heal all players between waves
                 for p in self.players.values():
-                    p.is_ready = False
-                    # Heal players between waves
                     p.hp = p.max_hp
                     p.is_dead = False
 
-                print(f"[Room {self.room_code}] Wave {self.wave_manager.current_wave} complete! Waiting for ready...")
+                print(f"[Room {self.room_code}] Wave {self.wave_manager.current_wave} complete! {self.WAVE_BREAK_TIME}s break...")
 
                 events.append({
                     "type": "wave_complete",
                     "wave": self.wave_manager.current_wave,
                     "bonus_coins": bonus,
-                    "next_wave": self.wave_manager.current_wave + 1
+                    "next_wave": self.wave_manager.current_wave + 1,
+                    "break_time": self.WAVE_BREAK_TIME
                 })
 
             # Check game over (all dead)
@@ -369,11 +381,13 @@ class Room:
         return {
             "type": "state",
             "tick": self.tick,
+            "status": self.status,
             "players": [p.to_state() for p in self.players.values()],
             "zombies": [z.to_state() for z in self.zombies.values()],
             "projectiles": [p.to_state() for p in self.projectiles.values()],
             "wave": self.wave_manager.current_wave,
             "wave_countdown": self.countdown if self.status == "countdown" else None,
+            "wave_break_remaining": round(self.wave_break_timer, 1) if self.status == "wave_break" else None,
             "zombies_remaining": self.wave_manager.zombies_remaining + len(self.zombies)
         }
 
@@ -391,14 +405,14 @@ class RoomManager:
     def __init__(self):
         self.rooms: Dict[str, Room] = {}
 
-    def create_room(self) -> Room:
+    def create_room(self, is_public: bool = False) -> Room:
         """Create a new room with unique code"""
         while True:
             code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             if code not in self.rooms:
                 break
 
-        room = Room(code)
+        room = Room(code, is_public=is_public)
         self.rooms[code] = room
         return room
 
@@ -414,6 +428,25 @@ class RoomManager:
                 return room
 
         return self.create_room()
+
+    def get_public_rooms(self) -> List[dict]:
+        """Get list of public rooms available to join"""
+        public_rooms = []
+        for room in self.rooms.values():
+            if room.is_public and room.status == "lobby" and not room.is_full:
+                # Get host (first player)
+                host = None
+                if room.players:
+                    first_player = list(room.players.values())[0]
+                    host = first_player.username or f"Player {first_player.id}"
+
+                public_rooms.append({
+                    "room_code": room.room_code,
+                    "player_count": room.player_count,
+                    "max_players": room.MAX_PLAYERS,
+                    "host": host
+                })
+        return public_rooms
 
     def remove_room(self, room_code: str):
         """Remove an empty room"""

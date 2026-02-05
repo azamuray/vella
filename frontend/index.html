@@ -52,11 +52,11 @@
             </div>
 
             <div class="menu-buttons">
-                <button class="btn btn-primary" id="btn-play">
-                    <span class="icon">🎮</span> Play
+                <button class="btn btn-primary" id="btn-create-room">
+                    <span class="icon">➕</span> Create Room
                 </button>
-                <button class="btn btn-secondary" id="btn-join">
-                    <span class="icon">🔗</span> Join Room
+                <button class="btn btn-secondary" id="btn-browse-rooms">
+                    <span class="icon">🌐</span> Browse Rooms
                 </button>
                 <button class="btn btn-secondary" id="btn-shop">
                     <span class="icon">🔫</span> Shop
@@ -110,14 +110,16 @@
         </div>
     </div>
 
-    <!-- Join room modal -->
-    <div id="join-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Join Room</h3>
-            <input type="text" id="input-room-code" placeholder="Enter room code" maxlength="6">
+    <!-- Browse rooms modal -->
+    <div id="rooms-modal" class="modal hidden">
+        <div class="modal-content rooms-modal">
+            <h3>🌐 Public Rooms</h3>
+            <div class="rooms-list" id="rooms-list">
+                <p class="loading-rooms">Loading...</p>
+            </div>
             <div class="modal-buttons">
-                <button class="btn btn-primary" id="btn-join-confirm">Join</button>
-                <button class="btn btn-secondary" id="btn-join-cancel">Cancel</button>
+                <button class="btn btn-secondary" id="btn-rooms-refresh">🔄 Refresh</button>
+                <button class="btn btn-secondary" id="btn-rooms-cancel">Close</button>
             </div>
         </div>
     </div>
@@ -178,13 +180,10 @@
         <div class="wave-complete-container">
             <h2>Wave <span id="complete-wave">1</span> Complete!</h2>
             <div class="wave-bonus">+<span id="wave-bonus">50</span> coins</div>
-            <p class="next-wave-text">Next: Wave <span id="next-wave">2</span></p>
+            <p class="next-wave-text">Next wave in <span id="wave-break-timer">10</span>s</p>
             <div class="wave-complete-buttons">
-                <button class="btn btn-primary" id="btn-next-wave">
-                    Ready for Next Wave
-                </button>
                 <button class="btn btn-secondary" id="btn-wave-shop">
-                    Shop
+                    🔫 Shop
                 </button>
             </div>
         </div>
@@ -218,6 +217,6 @@
         </div>
     </div>
 
-    <script type="module" src="/js/main.js?v=14"></script>
+    <script type="module" src="/js/main.js?v=15"></script>
 </body>
 </html>
