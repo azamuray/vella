@@ -174,10 +174,8 @@ class PlayerEntity:
 
     def switch_weapon(self, weapon_code: str):
         """Switch to a different weapon"""
-        if weapon_code in ["glock_17", "beretta_m9", "desert_eagle",
-                          "remington_870", "benelli_m4",
-                          "ak_47", "m4a1", "scar_h",
-                          "remington_700", "barrett_m82"]:
+        from .weapons import WEAPONS
+        if weapon_code in WEAPONS:
             self.weapon_code = weapon_code
             self._refill_ammo()
             self.reloading = False

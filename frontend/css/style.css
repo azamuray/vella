@@ -741,3 +741,55 @@ html, body {
     width: 100%;
     margin-bottom: 0.75rem;
 }
+
+/* Premium Weapons */
+.weapon-card.premium {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255, 215, 0, 0.1) 100%);
+}
+
+.weapon-card.premium .weapon-name {
+    color: #ffd700;
+}
+
+.premium-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.premium-price {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #ffd700;
+    font-weight: 600;
+}
+
+.premium-price .star-icon {
+    font-size: 1rem;
+}
+
+.btn-premium {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+    font-weight: bold;
+}
+
+.btn-premium:hover {
+    background: linear-gradient(135deg, #ffdd33, #ffbb33);
+}
+
+.weapon-description {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 4px;
+}

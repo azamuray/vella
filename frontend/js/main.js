@@ -475,7 +475,8 @@ function renderWeapons(weapons) {
         pistol: '🔫',
         shotgun: '💥',
         rifle: '🎯',
-        sniper: '🎪'
+        sniper: '🎪',
+        heavy: '⚙️'
     };
 
     // Use in-game coins if in game, otherwise saved coins
@@ -484,37 +485,62 @@ function renderWeapons(weapons) {
     for (const weapon of weapons) {
         const card = document.createElement('div');
         const equipped = window.VELLA.player?.equipped_weapon === weapon.code;
-        const canAfford = playerCoins >= weapon.price_coins;
+        const isPremium = weapon.premium || false;
+        const canAfford = isPremium ? true : playerCoins >= weapon.price_coins;
 
         let statusClass = '';
         if (equipped) statusClass = 'equipped';
         else if (weapon.owned) statusClass = 'owned';
+        else if (isPremium) statusClass = 'premium';
         else if (!canAfford) statusClass = 'locked';
 
         card.className = `weapon-card ${statusClass}`;
+
+        // Build price/button section
+        let priceSection = '';
+        if (!weapon.owned) {
+            if (isPremium) {
+                priceSection = `
+                    <div class="weapon-price premium-price">⭐ ${weapon.price_stars} Stars</div>
+                    <div class="weapon-desc">${weapon.description || ''}</div>
+                    <button class="btn btn-premium buy-stars-btn" data-code="${weapon.code}">
+                        Buy with Stars
+                    </button>
+                `;
+            } else {
+                priceSection = `
+                    <div class="weapon-price">💰 ${weapon.price_coins}</div>
+                    <button class="btn btn-primary buy-coins-btn" ${!canAfford ? 'disabled' : ''} data-code="${weapon.code}">
+                        Buy
+                    </button>
+                `;
+            }
+        } else if (equipped) {
+            priceSection = `<button class="btn btn-secondary" disabled>Equipped</button>`;
+        } else {
+            priceSection = `<button class="btn btn-primary equip-btn" data-code="${weapon.code}">Equip</button>`;
+        }
+
         card.innerHTML = `
             <div class="weapon-icon">${categoryIcons[weapon.category] || '🔫'}</div>
             <div class="weapon-name">${weapon.name}</div>
-            <div class="weapon-category">${weapon.category}</div>
+            <div class="weapon-category">${weapon.category}${isPremium ? ' ⭐' : ''}</div>
             <div class="weapon-stats">
                 DMG: ${weapon.damage} | Rate: ${weapon.fire_rate}/s
             </div>
-            ${!weapon.owned ? `
-                <div class="weapon-price">💰 ${weapon.price_coins}</div>
-                <button class="btn btn-primary" ${!canAfford ? 'disabled' : ''}>
-                    Buy
-                </button>
-            ` : equipped ? `
-                <button class="btn btn-secondary" disabled>Equipped</button>
-            ` : `
-                <button class="btn btn-primary equip-btn" data-code="${weapon.code}">Equip</button>
-            `}
+            ${priceSection}
         `;
 
-        // Buy button handler
-        const buyBtn = card.querySelector('.btn-primary:not(.equip-btn)');
-        if (buyBtn && !weapon.owned) {
-            buyBtn.addEventListener('click', () => buyWeapon(weapon.code));
+        // Buy with coins button handler
+        const buyCoinsBtn = card.querySelector('.buy-coins-btn');
+        if (buyCoinsBtn) {
+            buyCoinsBtn.addEventListener('click', () => buyWeapon(weapon.code));
+        }
+
+        // Buy with Stars button handler
+        const buyStarsBtn = card.querySelector('.buy-stars-btn');
+        if (buyStarsBtn) {
+            buyStarsBtn.addEventListener('click', () => buyWithStars(weapon.code));
         }
 
         // Equip button handler
@@ -545,6 +571,46 @@ async function buyWeapon(code) {
         }
     } catch (error) {
         console.error('Failed to buy weapon:', error);
+    }
+}
+
+async function buyWithStars(code) {
+    const tg = window.Telegram?.WebApp;
+    if (!tg) {
+        alert('Telegram WebApp not available');
+        return;
+    }
+
+    try {
+        // Create invoice on backend
+        const response = await fetch(`/api/payments/create-invoice?weapon_code=${code}&init_data=${encodeURIComponent(window.VELLA.initData)}`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert(error.detail || 'Failed to create invoice');
+            return;
+        }
+
+        const { invoice_url } = await response.json();
+
+        // Open Telegram payment dialog
+        tg.openInvoice(invoice_url, async (status) => {
+            console.log('[Payment] Status:', status);
+            if (status === 'paid') {
+                window.playSound('weapon_switch', 0.5);
+                alert('Purchase successful! 🎉');
+                await loadPlayerData();
+                showShop(); // Refresh
+            } else if (status === 'failed') {
+                alert('Payment failed');
+            }
+            // 'cancelled' - user closed the dialog
+        });
+    } catch (error) {
+        console.error('Failed to buy with Stars:', error);
+        alert('Error processing payment');
     }
 }
 

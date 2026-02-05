@@ -5,3 +5,4 @@ asyncpg==0.29.0
 redis==5.0.1
 pydantic==2.5.3
 python-dotenv==1.0.0
+httpx==0.26.0

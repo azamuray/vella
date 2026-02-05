@@ -4,10 +4,11 @@ FastAPI + WebSocket Backend
 """
 import os
 import json
+import httpx
 from typing import Optional
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -18,6 +19,9 @@ from .models import Player, Weapon, PlayerWeapon
 from .auth import validate_telegram_data
 from .game.engine import engine
 from .game.weapons import WEAPONS, get_all_weapons
+
+# Telegram Bot Token for payments
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 
 
 # Redis for additional state if needed
@@ -57,14 +61,15 @@ app.add_middleware(
 
 
 async def seed_weapons():
-    """Seed weapons table with initial data"""
+    """Seed weapons table with initial data (adds new weapons if missing)"""
     from .database import async_session
     async with async_session() as db:
-        result = await db.execute(select(Weapon).limit(1))
-        if result.scalar_one_or_none():
-            return  # Already seeded
-
         for code, data in WEAPONS.items():
+            # Check if weapon already exists
+            result = await db.execute(select(Weapon).where(Weapon.code == code))
+            if result.scalar_one_or_none():
+                continue  # Already exists
+
             weapon = Weapon(
                 code=code,
                 name=data["name"],
@@ -82,6 +87,7 @@ async def seed_weapons():
                 required_kills=data["required_kills"]
             )
             db.add(weapon)
+            print(f"[Seed] Added weapon: {code}")
 
         await db.commit()
 
@@ -302,6 +308,123 @@ async def equip_weapon(
     await db.commit()
 
     return {"success": True}
+
+
+# ============== TELEGRAM STARS PAYMENTS ==============
+
+@app.post("/api/payments/create-invoice")
+async def create_invoice(
+    weapon_code: str,
+    init_data: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create Telegram Stars invoice for premium weapon"""
+    user_data = validate_telegram_data(init_data)
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Invalid auth")
+
+    telegram_id = user_data.get("id")
+
+    # Check weapon exists and is premium
+    weapon_data = WEAPONS.get(weapon_code)
+    if not weapon_data:
+        raise HTTPException(status_code=404, detail="Weapon not found")
+
+    if not weapon_data.get("premium"):
+        raise HTTPException(status_code=400, detail="Not a premium weapon")
+
+    price_stars = weapon_data.get("price_stars", 0)
+    if price_stars <= 0:
+        raise HTTPException(status_code=400, detail="Invalid price")
+
+    # Check if already owned
+    result = await db.execute(
+        select(Weapon).where(Weapon.code == weapon_code)
+    )
+    weapon = result.scalar_one_or_none()
+    if weapon:
+        result = await db.execute(
+            select(PlayerWeapon)
+            .where(PlayerWeapon.player_id == telegram_id)
+            .where(PlayerWeapon.weapon_id == weapon.id)
+        )
+        if result.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Already owned")
+
+    # Create invoice via Telegram Bot API
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/createInvoiceLink",
+            json={
+                "title": weapon_data["name"],
+                "description": weapon_data.get("description", f"Premium weapon: {weapon_data['name']}"),
+                "payload": json.dumps({"weapon_code": weapon_code, "user_id": telegram_id}),
+                "currency": "XTR",  # Telegram Stars
+                "prices": [{"label": weapon_data["name"], "amount": price_stars}]
+            }
+        )
+        result = response.json()
+
+    if not result.get("ok"):
+        print(f"[Payment Error] {result}")
+        raise HTTPException(status_code=500, detail="Failed to create invoice")
+
+    return {"invoice_url": result["result"]}
+
+
+@app.post("/api/payments/webhook")
+async def payment_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    """Handle Telegram payment webhook"""
+    data = await request.json()
+    print(f"[Payment Webhook] {data}")
+
+    # Handle pre_checkout_query (confirm payment is valid)
+    if "pre_checkout_query" in data:
+        query = data["pre_checkout_query"]
+        query_id = query["id"]
+
+        # Always approve for now (could add validation)
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/answerPreCheckoutQuery",
+                json={"pre_checkout_query_id": query_id, "ok": True}
+            )
+        return {"ok": True}
+
+    # Handle successful payment
+    if "message" in data and "successful_payment" in data.get("message", {}):
+        payment = data["message"]["successful_payment"]
+        payload = json.loads(payment["invoice_payload"])
+        weapon_code = payload["weapon_code"]
+        user_id = payload["user_id"]
+
+        print(f"[Payment Success] User {user_id} bought {weapon_code}")
+
+        # Give weapon to player
+        result = await db.execute(
+            select(Weapon).where(Weapon.code == weapon_code)
+        )
+        weapon = result.scalar_one_or_none()
+
+        if weapon:
+            # Check not already owned
+            result = await db.execute(
+                select(PlayerWeapon)
+                .where(PlayerWeapon.player_id == user_id)
+                .where(PlayerWeapon.weapon_id == weapon.id)
+            )
+            if not result.scalar_one_or_none():
+                player_weapon = PlayerWeapon(
+                    player_id=user_id,
+                    weapon_id=weapon.id
+                )
+                db.add(player_weapon)
+                await db.commit()
+                print(f"[Payment] Weapon {weapon_code} added to user {user_id}")
+
+        return {"ok": True}
+
+    return {"ok": True}
 
 
 # ============== WEBSOCKET ==============

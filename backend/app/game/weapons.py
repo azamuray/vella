@@ -159,6 +159,62 @@ WEAPONS = {
         "pellets": 1,
         "penetration": 5,
         "required_kills": 2000
+    },
+
+    # === PREMIUM WEAPONS (Stars only) ===
+    "awp_dragon": {
+        "name": "AWP Dragon Lore",
+        "category": "sniper",
+        "price_dollars": 0,
+        "price_coins": 0,
+        "price_stars": 50,  # ~$1
+        "damage": 250,
+        "fire_rate": 0.6,
+        "reload_time": 3.5,
+        "magazine_size": 10,
+        "spread": 0.01,
+        "projectile_speed": 1600,
+        "pellets": 1,
+        "penetration": 6,
+        "required_kills": 0,
+        "premium": True,
+        "description": "Legendary sniper with dragon skin"
+    },
+    "minigun": {
+        "name": "M134 Minigun",
+        "category": "heavy",
+        "price_dollars": 0,
+        "price_coins": 0,
+        "price_stars": 100,  # ~$2
+        "damage": 20,
+        "fire_rate": 30.0,  # 30 bullets per second!
+        "reload_time": 5.0,
+        "magazine_size": 200,
+        "spread": 0.15,
+        "projectile_speed": 800,
+        "pellets": 1,
+        "penetration": 2,
+        "required_kills": 0,
+        "premium": True,
+        "description": "Devastating firepower"
+    },
+    "golden_deagle": {
+        "name": "Golden Desert Eagle",
+        "category": "pistol",
+        "price_dollars": 0,
+        "price_coins": 0,
+        "price_stars": 25,  # ~$0.50
+        "damage": 70,
+        "fire_rate": 1.8,
+        "reload_time": 1.8,
+        "magazine_size": 7,
+        "spread": 0.06,
+        "projectile_speed": 950,
+        "pellets": 1,
+        "penetration": 3,
+        "required_kills": 0,
+        "premium": True,
+        "description": "Stylish and deadly"
     }
 }
 
