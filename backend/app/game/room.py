@@ -26,8 +26,8 @@ class Projectile:
         self.angle = angle
         self.speed = weapon["projectile_speed"]
         self.damage = weapon["damage"]
-        self.penetration = weapon["penetration"]
-        self.hits = 0
+        self.remaining_damage = weapon["damage"]  # Damage left to deal
+        self.hit_zombies: Set[int] = set()  # Track already hit zombies
 
         # Calculate velocity
         import math
@@ -293,11 +293,22 @@ class Room:
 
             # Check collision with zombies
             for zombie in list(self.zombies.values()):
+                # Skip if already hit this zombie
+                if zombie.id in proj.hit_zombies:
+                    continue
+
                 if line_circle_intersection(
                     old_x, old_y, proj.x, proj.y,
                     zombie.x, zombie.y, zombie.size
                 ):
-                    if zombie.take_damage(proj.damage):
+                    # Mark as hit
+                    proj.hit_zombies.add(zombie.id)
+
+                    # Calculate damage: min of remaining damage and zombie HP
+                    zombie_hp_before = zombie.hp
+                    damage_to_deal = min(proj.remaining_damage, zombie_hp_before)
+
+                    if zombie.take_damage(damage_to_deal):
                         # Zombie killed
                         player = self.players.get(proj.owner_id)
                         if player:
@@ -313,8 +324,11 @@ class Room:
                         })
                         del self.zombies[zombie.id]
 
-                    proj.hits += 1
-                    if proj.hits >= proj.penetration:
+                    # Subtract zombie's HP from remaining damage
+                    proj.remaining_damage -= zombie_hp_before
+
+                    # Remove projectile if no damage left
+                    if proj.remaining_damage <= 0:
                         to_remove.append(proj.id)
                         break
 
