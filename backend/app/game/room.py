@@ -175,8 +175,9 @@ class Room:
             self.countdown -= dt
             if self.countdown <= 0:
                 self.status = "playing"
-                wave_info = self.wave_manager.start_wave(1)
-                print(f"[Room {self.room_code}] Wave 1 started: {wave_info}")
+                next_wave = self.wave_manager.current_wave + 1
+                wave_info = self.wave_manager.start_wave(next_wave)
+                print(f"[Room {self.room_code}] Wave {next_wave} started: {wave_info}")
                 events.append({"type": "wave_start", **wave_info})
 
         elif self.status == "playing":
@@ -223,11 +224,6 @@ class Room:
             # Check wave complete
             if self.wave_manager.is_wave_complete(len(self.zombies)):
                 bonus = self.wave_manager.get_wave_bonus()
-                events.append({
-                    "type": "wave_complete",
-                    "wave": self.wave_manager.current_wave,
-                    "bonus_coins": bonus
-                })
 
                 # Distribute bonus to alive players
                 alive_players = [p for p in self.players.values() if not p.is_dead]
@@ -236,10 +232,25 @@ class Room:
                     for p in alive_players:
                         p.coins_earned += bonus_per_player
 
-                # Start countdown for next wave
-                self.status = "countdown"
-                self.countdown = self.WAVE_COUNTDOWN
+                # Go to wave break - wait for players to ready up
+                self.status = "wave_break"
                 self.wave_manager.wave_active = False
+
+                # Reset all players' ready status
+                for p in self.players.values():
+                    p.is_ready = False
+                    # Heal players between waves
+                    p.hp = p.max_hp
+                    p.is_dead = False
+
+                print(f"[Room {self.room_code}] Wave {self.wave_manager.current_wave} complete! Waiting for ready...")
+
+                events.append({
+                    "type": "wave_complete",
+                    "wave": self.wave_manager.current_wave,
+                    "bonus_coins": bonus,
+                    "next_wave": self.wave_manager.current_wave + 1
+                })
 
             # Check game over (all dead)
             if self.all_players_dead():

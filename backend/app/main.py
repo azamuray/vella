@@ -365,13 +365,24 @@ async def websocket_endpoint(
                 player.is_ready = data.get("is_ready", False)
                 await room.broadcast(room.get_lobby_state())
 
-                # Check if all ready to start
+                # Check if all ready to start/continue
                 if room.all_players_ready() and room.player_count >= 1:
-                    room.start_game()
-                    await room.broadcast({
-                        "type": "game_start",
-                        "players": [p.to_state() for p in room.players.values()]
-                    })
+                    if room.status == "lobby":
+                        # Start new game
+                        room.start_game()
+                        await room.broadcast({
+                            "type": "game_start",
+                            "players": [p.to_state() for p in room.players.values()]
+                        })
+                    elif room.status == "wave_break":
+                        # Continue to next wave
+                        room.status = "countdown"
+                        room.countdown = room.WAVE_COUNTDOWN
+                        await room.broadcast({
+                            "type": "wave_countdown",
+                            "next_wave": room.wave_manager.current_wave + 1,
+                            "countdown": room.WAVE_COUNTDOWN
+                        })
 
             elif msg_type == "input" and room and player:
                 player.apply_input(

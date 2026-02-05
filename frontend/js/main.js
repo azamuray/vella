@@ -127,7 +127,11 @@ function setupEventListeners() {
     // Shop back
     document.getElementById('btn-shop-back').addEventListener('click', () => {
         hideScreen('shop-screen');
-        showScreen('menu-screen');
+        if (window.VELLA.inGameShop) {
+            showScreen('wave-complete');
+        } else {
+            showScreen('menu-screen');
+        }
     });
 
     // Ready button
@@ -160,6 +164,19 @@ function setupEventListeners() {
         hideScreen('gameover-screen');
         showScreen('menu-screen');
         loadPlayerData();
+    });
+
+    // Wave complete buttons
+    document.getElementById('btn-next-wave').addEventListener('click', () => {
+        if (window.VELLA.ws) {
+            window.VELLA.ws.send({ type: 'ready', is_ready: true });
+        }
+    });
+
+    document.getElementById('btn-wave-shop').addEventListener('click', () => {
+        // Hide wave complete, show shop (but keep game in background)
+        hideScreen('wave-complete');
+        showInGameShop();
     });
 }
 
@@ -203,7 +220,17 @@ async function joinRoom(roomCode) {
     });
 
     window.VELLA.ws.on('wave_start', (data) => {
+        hideScreen('wave-complete');
         showWaveAnnouncement(data.wave, data.zombie_count);
+    });
+
+    window.VELLA.ws.on('wave_complete', (data) => {
+        showWaveComplete(data);
+    });
+
+    window.VELLA.ws.on('wave_countdown', (data) => {
+        hideScreen('wave-complete');
+        showWaveAnnouncement(data.next_wave, null, true);
     });
 
     window.VELLA.ws.on('zombie_killed', (data) => {
@@ -284,15 +311,31 @@ function startGame(data) {
     window.VELLA.game.start();
 }
 
-function showWaveAnnouncement(wave, zombieCount) {
+function showWaveAnnouncement(wave, zombieCount, isCountdown = false) {
     const el = document.getElementById('wave-announcement');
     document.getElementById('announce-wave').textContent = wave;
-    document.getElementById('announce-zombies').textContent = `${zombieCount} zombies incoming`;
+    document.getElementById('announce-zombies').textContent = isCountdown
+        ? 'Get ready!'
+        : `${zombieCount} zombies incoming`;
 
     el.classList.remove('hidden');
     setTimeout(() => {
         el.classList.add('hidden');
     }, 3000);
+}
+
+function showWaveComplete(data) {
+    document.getElementById('complete-wave').textContent = data.wave;
+    document.getElementById('wave-bonus').textContent = data.bonus_coins;
+    document.getElementById('next-wave').textContent = data.next_wave;
+
+    // Update player coins display
+    if (window.VELLA.game) {
+        window.VELLA.game.coins += data.bonus_coins;
+        document.getElementById('hud-coins').textContent = window.VELLA.game.coins;
+    }
+
+    showScreen('wave-complete');
 }
 
 function endGame(data) {
@@ -333,8 +376,28 @@ function endGame(data) {
 async function showShop() {
     hideScreen('menu-screen');
     showScreen('shop-screen');
+    window.VELLA.inGameShop = false;
 
     document.getElementById('shop-coins').textContent = window.VELLA.player?.coins || 0;
+
+    try {
+        const response = await fetch(`/api/weapons?init_data=${encodeURIComponent(window.VELLA.initData)}`);
+        if (response.ok) {
+            const weapons = await response.json();
+            renderWeapons(weapons);
+        }
+    } catch (error) {
+        console.error('Failed to load weapons:', error);
+    }
+}
+
+async function showInGameShop() {
+    showScreen('shop-screen');
+    window.VELLA.inGameShop = true;
+
+    // Use in-game coins if available
+    const coins = window.VELLA.game?.coins || window.VELLA.player?.coins || 0;
+    document.getElementById('shop-coins').textContent = coins;
 
     try {
         const response = await fetch(`/api/weapons?init_data=${encodeURIComponent(window.VELLA.initData)}`);

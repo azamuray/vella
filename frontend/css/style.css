@@ -612,6 +612,50 @@ html, body {
     100% { opacity: 0; }
 }
 
+/* Wave Complete Screen */
+#wave-complete {
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 150;
+}
+
+.wave-complete-container {
+    text-align: center;
+    padding: 2rem;
+    max-width: 350px;
+    width: 90%;
+    background: var(--bg-card);
+    border-radius: 20px;
+    border: 2px solid var(--success);
+}
+
+.wave-complete-container h2 {
+    font-size: 1.8rem;
+    color: var(--success);
+    margin-bottom: 0.5rem;
+}
+
+.wave-bonus {
+    font-size: 2rem;
+    color: var(--warning);
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+.next-wave-text {
+    color: var(--text-dim);
+    margin-bottom: 1.5rem;
+}
+
+.wave-complete-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.wave-complete-buttons .btn {
+    width: 100%;
+}
+
 /* Game Over Screen */
 .gameover-container {
     text-align: center;
