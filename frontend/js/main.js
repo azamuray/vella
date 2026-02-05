@@ -228,6 +228,11 @@ async function joinRoom(roomCode) {
 
     window.VELLA.ws.on('wave_start', (data) => {
         hideScreen('wave-complete');
+        // Clear countdown if still running
+        if (window.VELLA.countdownInterval) {
+            clearInterval(window.VELLA.countdownInterval);
+            window.VELLA.countdownInterval = null;
+        }
         showWaveAnnouncement(data.wave, data.zombie_count);
     });
 
@@ -238,7 +243,7 @@ async function joinRoom(roomCode) {
 
     window.VELLA.ws.on('wave_countdown', (data) => {
         hideScreen('wave-complete');
-        showWaveAnnouncement(data.next_wave, null, true);
+        showWaveCountdown(data.next_wave, data.countdown || 5);
     });
 
     window.VELLA.ws.on('zombie_killed', (data) => {
@@ -319,17 +324,40 @@ function startGame(data) {
     window.VELLA.game.start();
 }
 
-function showWaveAnnouncement(wave, zombieCount, isCountdown = false) {
+function showWaveAnnouncement(wave, zombieCount) {
     const el = document.getElementById('wave-announcement');
     document.getElementById('announce-wave').textContent = wave;
-    document.getElementById('announce-zombies').textContent = isCountdown
-        ? 'Get ready!'
-        : `${zombieCount} zombies incoming`;
+    document.getElementById('announce-zombies').textContent = `${zombieCount} zombies incoming`;
 
     el.classList.remove('hidden');
     setTimeout(() => {
         el.classList.add('hidden');
     }, 3000);
+}
+
+function showWaveCountdown(wave, seconds) {
+    const el = document.getElementById('wave-announcement');
+    document.getElementById('announce-wave').textContent = wave;
+
+    // Clear any existing countdown
+    if (window.VELLA.countdownInterval) {
+        clearInterval(window.VELLA.countdownInterval);
+    }
+
+    let remaining = seconds;
+    document.getElementById('announce-zombies').textContent = `Starting in ${remaining}...`;
+    el.classList.remove('hidden');
+
+    window.VELLA.countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+            document.getElementById('announce-zombies').textContent = `Starting in ${remaining}...`;
+        } else {
+            clearInterval(window.VELLA.countdownInterval);
+            window.VELLA.countdownInterval = null;
+            // Will be hidden by wave_start event
+        }
+    }, 1000);
 }
 
 function showWaveComplete(data) {
