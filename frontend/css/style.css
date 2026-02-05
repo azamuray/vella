@@ -426,10 +426,15 @@ html, body {
     position: fixed;
     inset: 0;
     z-index: 50;
+    /* Don't capture touches at bottom where joysticks are */
+    pointer-events: none;
 }
 
 #game-container canvas {
     display: block;
+    pointer-events: auto;
+    /* Leave space for joysticks */
+    height: calc(100% - 200px) !important;
 }
 
 /* Joystick Zones */
@@ -438,41 +443,46 @@ html, body {
     bottom: 0;
     width: 50%;
     height: 200px;
-    z-index: 60;
+    z-index: 200;
     touch-action: none;
+    pointer-events: auto;
 }
 
 #joystick-left {
     left: 0;
-    background: radial-gradient(circle at 80px 120px, rgba(74, 222, 128, 0.15) 0%, transparent 50%);
+    background: linear-gradient(to top, rgba(74, 222, 128, 0.25) 0%, rgba(74, 222, 128, 0.1) 50%, transparent 100%);
+    border-top: 1px solid rgba(74, 222, 128, 0.3);
 }
 
 #joystick-right {
     right: 0;
-    background: radial-gradient(circle at calc(100% - 80px) 120px, rgba(233, 69, 96, 0.15) 0%, transparent 50%);
+    background: linear-gradient(to top, rgba(233, 69, 96, 0.25) 0%, rgba(233, 69, 96, 0.1) 50%, transparent 100%);
+    border-top: 1px solid rgba(233, 69, 96, 0.3);
 }
 
 /* Joystick hint labels */
 #joystick-left::after {
     content: 'MOVE';
     position: absolute;
-    bottom: 10px;
-    left: 80px;
+    top: 10px;
+    left: 50%;
     transform: translateX(-50%);
-    font-size: 10px;
-    color: rgba(74, 222, 128, 0.5);
+    font-size: 12px;
+    font-weight: bold;
+    color: rgba(74, 222, 128, 0.7);
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
 #joystick-right::after {
-    content: 'AIM & SHOOT';
+    content: 'SHOOT';
     position: absolute;
-    bottom: 10px;
-    right: 80px;
-    transform: translateX(50%);
-    font-size: 10px;
-    color: rgba(233, 69, 96, 0.5);
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: bold;
+    color: rgba(233, 69, 96, 0.7);
     text-transform: uppercase;
     letter-spacing: 2px;
 }
@@ -508,13 +518,16 @@ html, body {
 
 .hud-bottom {
     position: absolute;
-    bottom: 220px;
+    bottom: 210px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px;
+    border-radius: 12px;
 }
 
 .health-bar {
