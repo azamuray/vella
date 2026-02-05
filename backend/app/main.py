@@ -251,11 +251,7 @@ async def buy_weapon(
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Already owned")
 
-    # Check kills requirement
-    if player.total_kills < weapon.required_kills:
-        raise HTTPException(status_code=400, detail="Not enough kills to unlock")
-
-    # Check coins
+    # Check coins (removed kills requirement - buy with coins only)
     if player.coins < weapon.price_coins:
         raise HTTPException(status_code=400, detail="Not enough coins")
 

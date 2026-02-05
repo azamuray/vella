@@ -429,14 +429,17 @@ function renderWeapons(weapons) {
         sniper: '🎪'
     };
 
+    const playerCoins = window.VELLA.player?.coins || 0;
+
     for (const weapon of weapons) {
         const card = document.createElement('div');
         const equipped = window.VELLA.player?.equipped_weapon === weapon.code;
+        const canAfford = playerCoins >= weapon.price_coins;
 
         let statusClass = '';
         if (equipped) statusClass = 'equipped';
         else if (weapon.owned) statusClass = 'owned';
-        else if (!weapon.can_unlock) statusClass = 'locked';
+        else if (!canAfford) statusClass = 'locked';
 
         card.className = `weapon-card ${statusClass}`;
         card.innerHTML = `
@@ -447,10 +450,8 @@ function renderWeapons(weapons) {
                 DMG: ${weapon.damage} | Rate: ${weapon.fire_rate}/s
             </div>
             ${!weapon.owned ? `
-                <div class="weapon-price">
-                    ${weapon.can_unlock ? `💰 ${weapon.price_coins}` : `🔒 ${weapon.required_kills} kills`}
-                </div>
-                <button class="btn btn-primary" ${!weapon.can_unlock || weapon.price_coins > (window.VELLA.player?.coins || 0) ? 'disabled' : ''}>
+                <div class="weapon-price">💰 ${weapon.price_coins}</div>
+                <button class="btn btn-primary" ${!canAfford ? 'disabled' : ''}>
                     Buy
                 </button>
             ` : equipped ? `
