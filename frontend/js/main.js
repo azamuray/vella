@@ -348,6 +348,10 @@ function setupRoomHandlers() {
         window.VELLA.inGameShop = false;
         document.getElementById('shop-ready-bar').classList.add('hidden');
 
+        // Show joysticks for gameplay
+        document.getElementById('joystick-left').classList.remove('hidden');
+        document.getElementById('joystick-right').classList.remove('hidden');
+
         // Clear countdowns if still running
         if (window.VELLA.countdownInterval) {
             clearInterval(window.VELLA.countdownInterval);
