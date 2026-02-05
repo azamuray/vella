@@ -139,6 +139,9 @@ function setupEventListeners() {
     document.getElementById('btn-shop-back').addEventListener('click', () => {
         hideScreen('shop-screen');
         if (window.VELLA.inGameShop) {
+            // Show joysticks again
+            document.getElementById('joystick-left').classList.remove('hidden');
+            document.getElementById('joystick-right').classList.remove('hidden');
             showScreen('wave-complete');
         } else {
             showScreen('menu-screen');
@@ -563,6 +566,10 @@ async function showShop() {
 async function showInGameShop() {
     showScreen('shop-screen');
     window.VELLA.inGameShop = true;
+
+    // Hide joysticks while in shop
+    document.getElementById('joystick-left').classList.add('hidden');
+    document.getElementById('joystick-right').classList.add('hidden');
 
     // Use in-game coins if available
     const coins = window.VELLA.game?.coins || window.VELLA.player?.coins || 0;
