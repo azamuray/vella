@@ -243,7 +243,7 @@ function showRoomsBrowser() {
 
 async function loadPublicRooms() {
     const listEl = document.getElementById('rooms-list');
-    listEl.innerHTML = '<p class="loading-rooms">Loading...</p>';
+    listEl.innerHTML = '<p class="loading-rooms">Загрузка...</p>';
 
     try {
         const response = await fetch('/api/rooms');
@@ -495,13 +495,13 @@ function showWaveCountdown(wave, seconds) {
     }
 
     let remaining = seconds;
-    document.getElementById('announce-zombies').textContent = `Starting in ${remaining}...`;
+    document.getElementById('announce-zombies').textContent = `Начало через ${remaining}...`;
     el.classList.remove('hidden');
 
     window.VELLA.countdownInterval = setInterval(() => {
         remaining--;
         if (remaining > 0) {
-            document.getElementById('announce-zombies').textContent = `Starting in ${remaining}...`;
+            document.getElementById('announce-zombies').textContent = `Начало через ${remaining}...`;
         } else {
             clearInterval(window.VELLA.countdownInterval);
             window.VELLA.countdownInterval = null;
@@ -559,14 +559,14 @@ function endGame(data) {
 
     // Leaderboard
     const leaderboard = document.getElementById('final-leaderboard');
-    leaderboard.innerHTML = '<h4>Top Players</h4>';
+    leaderboard.innerHTML = '<h4>Лучшие игроки</h4>';
     data.player_stats.forEach((player, index) => {
         const row = document.createElement('div');
         row.className = 'leaderboard-row';
         row.innerHTML = `
             <span class="rank">#${index + 1}</span>
-            <span class="name">${player.username || 'Player'}</span>
-            <span class="kills">${player.kills} kills</span>
+            <span class="name">${player.username || 'Игрок'}</span>
+            <span class="kills">${player.kills} 💀</span>
         `;
         leaderboard.appendChild(row);
     });
