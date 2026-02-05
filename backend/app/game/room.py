@@ -59,7 +59,7 @@ class Room:
     GAME_HEIGHT = 1080
     TICK_RATE = 20  # ticks per second
     MAX_PLAYERS = 10
-    WAVE_COUNTDOWN = 5.0  # seconds between waves
+    WAVE_COUNTDOWN = 3.0  # seconds between waves
 
     def __init__(self, room_code: str):
         self.room_code = room_code

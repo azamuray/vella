@@ -383,6 +383,12 @@ async def websocket_endpoint(
                             "type": "game_start",
                             "players": [p.to_state() for p in room.players.values()]
                         })
+                        # Send countdown for first wave too
+                        await room.broadcast({
+                            "type": "wave_countdown",
+                            "next_wave": 1,
+                            "countdown": room.WAVE_COUNTDOWN
+                        })
                     elif room.status == "wave_break":
                         # Continue to next wave
                         room.status = "countdown"
