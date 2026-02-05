@@ -200,6 +200,11 @@ export class GameManager {
     }
 
     updateState(state) {
+        if (!this.scene) {
+            console.warn('Scene not ready, skipping state update');
+            return;
+        }
+
         this.currentWave = state.wave;
 
         // Update players
@@ -220,6 +225,9 @@ export class GameManager {
         }
 
         // Update zombies
+        if (state.zombies.length > 0 && Object.keys(this.zombies).length === 0) {
+            console.log(`Received ${state.zombies.length} zombies from server`);
+        }
         for (const zombieData of state.zombies) {
             if (this.zombies[zombieData.id]) {
                 this.updateZombie(zombieData);
@@ -350,11 +358,38 @@ export class GameManager {
     }
 
     createZombie(data) {
+        if (!this.scene) {
+            console.warn('Scene not ready, cannot create zombie');
+            return;
+        }
+
         const textureKey = `zombie_${data.type}`;
         const x = this.scaleX(data.x);
         const y = this.scaleY(data.y);
 
-        const sprite = this.scene.add.sprite(x, y, textureKey);
+        console.log(`Creating zombie ${data.id} type=${data.type} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+
+        // Check if texture exists, use fallback if not
+        let sprite;
+        if (this.scene.textures.exists(textureKey)) {
+            sprite = this.scene.add.sprite(x, y, textureKey);
+        } else {
+            // Create fallback circle
+            const colors = {
+                'normal': 0x5a7247,
+                'fast': 0x8a7a5a,
+                'tank': 0x4a5a3a,
+                'boss': 0x7c2a2a
+            };
+            const sizes = {
+                'normal': 20,
+                'fast': 16,
+                'tank': 28,
+                'boss': 36
+            };
+            const size = sizes[data.type] || 20;
+            sprite = this.scene.add.circle(x, y, size, colors[data.type] || 0x5a7247);
+        }
         sprite.setDepth(5);
 
         // Health bar for tanks and bosses
@@ -376,7 +411,11 @@ export class GameManager {
 
     updateZombie(data) {
         const zombie = this.zombies[data.id];
-        if (!zombie) return;
+        if (!zombie) {
+            console.warn(`Zombie ${data.id} not found for update, creating...`);
+            this.createZombie(data);
+            return;
+        }
 
         // Set target for smooth interpolation
         zombie.targetX = this.scaleX(data.x);
