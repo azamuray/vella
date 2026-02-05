@@ -173,6 +173,13 @@ function setupEventListeners() {
         }
     });
 
+    // Debug: Kill all zombies
+    document.getElementById('btn-kill-all').addEventListener('click', () => {
+        if (window.VELLA.ws) {
+            window.VELLA.ws.send({ type: 'kill_all' });
+        }
+    });
+
     document.getElementById('btn-wave-shop').addEventListener('click', () => {
         // Hide wave complete, show shop (but keep game in background)
         hideScreen('wave-complete');

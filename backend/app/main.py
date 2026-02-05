@@ -398,6 +398,16 @@ async def websocket_endpoint(
                 weapon_code = data.get("weapon_code", "glock_17")
                 player.switch_weapon(weapon_code)
 
+            elif msg_type == "kill_all" and room:
+                # Debug: kill all zombies
+                killed_count = len(room.zombies)
+                for zombie in list(room.zombies.values()):
+                    if player:
+                        player.add_kill(zombie.coins)
+                    room.total_kills += 1
+                room.zombies.clear()
+                print(f"[DEBUG] Killed all {killed_count} zombies in room {room.room_code}")
+
             elif msg_type == "leave_room" and room:
                 room.remove_player(telegram_id)
                 await room.broadcast(room.get_lobby_state())
