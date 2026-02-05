@@ -70,10 +70,20 @@ export class GameManager {
         scene.load.svg('zombie_boss', '/assets/sprites/zombie_boss.svg', { width: 72, height: 72 });
         scene.load.svg('bullet', '/assets/sprites/bullet.svg', { width: 16, height: 8 });
 
+        // Load audio
+        scene.load.audio('shoot_single', '/assets/audio/shoot_single.ogg');
+        scene.load.audio('shoot_auto', '/assets/audio/shoot_auto.ogg');
+        scene.load.audio('zombie_death', '/assets/audio/zombie_death.ogg');
+        scene.load.audio('zombie_hurt', '/assets/audio/zombie_hurt.ogg');
+        scene.load.audio('zombie_attack', '/assets/audio/zombie_attack.ogg');
+        scene.load.audio('weapon_switch', '/assets/audio/weapon_switch.ogg');
+
         // Fallback: create textures if SVG loading fails
         scene.load.on('loaderror', (file) => {
             console.warn('Failed to load:', file.key, '- creating fallback');
-            this.createFallbackTexture(scene, file.key);
+            if (!file.key.startsWith('shoot_') && !file.key.startsWith('zombie_') && !file.key.startsWith('weapon_')) {
+                this.createFallbackTexture(scene, file.key);
+            }
         });
 
         scene.load.on('complete', () => {
@@ -485,6 +495,11 @@ export class GameManager {
             onComplete: () => flash.destroy()
         });
 
+        // Play shoot sound (only for own projectiles to avoid spam)
+        if (data.owner_id === this.myId) {
+            this.playSound('shoot_single', 0.3);
+        }
+
         this.projectiles[data.id] = { sprite, data };
         this.projectileSprites.add(sprite);
     }
@@ -508,6 +523,9 @@ export class GameManager {
     }
 
     onZombieKilled(data) {
+        // Play death sound for any zombie kill
+        this.playSound('zombie_death', 0.4);
+
         if (data.killer_id === this.myId) {
             this.kills++;
             this.coins += data.coins;
@@ -521,6 +539,7 @@ export class GameManager {
 
     onPlayerDied(data) {
         if (data.player_id === this.myId) {
+            this.playSound('zombie_attack', 0.5);
             this.showFloatingText('YOU DIED!', 0xff0000, true);
         }
     }
@@ -593,6 +612,16 @@ export class GameManager {
         const scaleFactorX = this.scene.scale.width / 1920;
         const scaleFactorY = this.scene.scale.height / 1080;
         return size * Math.min(scaleFactorX, scaleFactorY);
+    }
+
+    // Play sound effect
+    playSound(key, volume = 0.5) {
+        if (!this.scene || !this.scene.sound) return;
+        try {
+            this.scene.sound.play(key, { volume });
+        } catch (e) {
+            // Ignore audio errors (e.g., user hasn't interacted yet)
+        }
     }
 
     destroy() {
