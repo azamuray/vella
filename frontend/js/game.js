@@ -74,6 +74,11 @@ export class GameManager {
 
         scene.load.on('complete', () => {
             this.assetsLoaded = true;
+            // List loaded textures for debugging
+            const textures = ['player', 'zombie_normal', 'zombie_fast', 'zombie_tank', 'zombie_boss', 'bullet'];
+            for (const key of textures) {
+                console.log(`Texture ${key}: ${scene.textures.exists(key) ? 'loaded' : 'MISSING'}`);
+            }
         });
     }
 
@@ -367,7 +372,8 @@ export class GameManager {
         const x = this.scaleX(data.x);
         const y = this.scaleY(data.y);
 
-        console.log(`Creating zombie ${data.id} type=${data.type} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+        const textureExists = this.scene.textures.exists(textureKey);
+        console.log(`Creating zombie ${data.id} type=${data.type} at screen(${x.toFixed(0)}, ${y.toFixed(0)}) game(${data.x}, ${data.y}) texture=${textureKey} exists=${textureExists}`);
 
         // Check if texture exists, use fallback if not
         let sprite;
