@@ -457,7 +457,8 @@ function renderWeapons(weapons) {
         sniper: '🎪'
     };
 
-    const playerCoins = window.VELLA.player?.coins || 0;
+    // Use in-game coins if in game, otherwise saved coins
+    const playerCoins = window.VELLA.game?.coins ?? window.VELLA.player?.coins ?? 0;
 
     for (const weapon of weapons) {
         const card = document.createElement('div');
