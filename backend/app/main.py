@@ -346,6 +346,19 @@ async def websocket_endpoint(
 
                 player = room.add_player(telegram_id, username, websocket)
 
+                # Set player's equipped weapon from DB
+                async with async_session() as db:
+                    result = await db.execute(
+                        select(PlayerWeapon, Weapon)
+                        .join(Weapon)
+                        .where(PlayerWeapon.player_id == telegram_id)
+                        .where(PlayerWeapon.equipped == True)
+                    )
+                    row = result.first()
+                    if row:
+                        player.switch_weapon(row[1].code)
+                        print(f"[Join] Player {telegram_id} using equipped weapon: {row[1].code}")
+
                 # Send room joined confirmation
                 await websocket.send_json({
                     "type": "room_joined",

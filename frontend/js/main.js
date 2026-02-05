@@ -502,6 +502,12 @@ async function equipWeapon(code) {
 
         if (response.ok) {
             window.VELLA.player.equipped_weapon = code;
+
+            // Also switch weapon in active game session
+            if (window.VELLA.ws?.isConnected) {
+                window.VELLA.ws.send({ type: 'switch_weapon', weapon_code: code });
+            }
+
             showShop(); // Refresh
         }
     } catch (error) {
