@@ -405,6 +405,22 @@ async def websocket_endpoint(
                 print(f"[DEBUG] Killed all {killed_count} zombies in room {room.room_code}")
 
             elif msg_type == "leave_room" and room:
+                # Save player stats BEFORE removing from room
+                if player and (player.coins_earned > 0 or player.kills > 0):
+                    async with async_session() as db:
+                        result = await db.execute(
+                            select(Player).where(Player.telegram_id == telegram_id)
+                        )
+                        db_player = result.scalar_one_or_none()
+                        if db_player:
+                            db_player.coins += player.coins_earned
+                            db_player.total_kills += player.kills
+                            db_player.games_played += 1
+                            if room.wave_manager.current_wave > db_player.highest_wave:
+                                db_player.highest_wave = room.wave_manager.current_wave
+                            await db.commit()
+                            print(f"[Save] Player {telegram_id} saved: +{player.coins_earned} coins, +{player.kills} kills")
+
                 room.remove_player(telegram_id)
                 await room.broadcast(room.get_lobby_state())
 
