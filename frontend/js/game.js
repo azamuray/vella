@@ -375,51 +375,44 @@ export class GameManager {
 
         // Zombie visual config
         const zombieConfig = {
-            'normal': { color: 0x5a7247, size: 20, outline: 0x3a4a2a },
-            'fast': { color: 0x8a7a5a, size: 16, outline: 0x5a4a3a },
-            'tank': { color: 0x4a5a3a, size: 28, outline: 0x2a3a1a },
-            'boss': { color: 0x7c2a2a, size: 36, outline: 0x4c1a1a }
+            'normal': { color: 0x5a7247, size: 20 },
+            'fast': { color: 0x8a7a5a, size: 16 },
+            'tank': { color: 0x4a5a3a, size: 28 },
+            'boss': { color: 0x7c2a2a, size: 36 }
         };
         const config = zombieConfig[data.type] || zombieConfig.normal;
 
-        // Create zombie as graphics (guaranteed to work)
-        const graphics = this.scene.add.graphics();
-        graphics.setPosition(x, y);
+        // Create zombie container
+        const container = this.scene.add.container(x, y);
+        container.setDepth(5);
 
-        // Outline
-        graphics.fillStyle(config.outline, 1);
-        graphics.fillCircle(0, 0, config.size + 2);
+        // Body (circle)
+        const body = this.scene.add.circle(0, 0, config.size, config.color);
+        body.setStrokeStyle(3, 0x222222);
+        container.add(body);
 
-        // Body
-        graphics.fillStyle(config.color, 1);
-        graphics.fillCircle(0, 0, config.size);
-
-        // Eyes (red dots)
-        graphics.fillStyle(0xff0000, 1);
-        graphics.fillCircle(-config.size * 0.3, -config.size * 0.2, config.size * 0.15);
-        graphics.fillCircle(config.size * 0.3, -config.size * 0.2, config.size * 0.15);
-
-        graphics.setDepth(5);
-
-        // Use graphics as sprite replacement
-        const sprite = graphics;
+        // Eyes (red)
+        const leftEye = this.scene.add.circle(-config.size * 0.35, -config.size * 0.2, config.size * 0.18, 0xff0000);
+        const rightEye = this.scene.add.circle(config.size * 0.35, -config.size * 0.2, config.size * 0.18, 0xff0000);
+        container.add(leftEye);
+        container.add(rightEye);
 
         // Health bar for tanks and bosses
         let healthBar = null;
         if (data.type === 'tank' || data.type === 'boss') {
             healthBar = this.scene.add.graphics().setDepth(6);
             this.drawHealthBar(healthBar, data.hp, data.max_hp, 30, 0xff4444);
+            healthBar.setPosition(x - 15, y - config.size - 8);
         }
 
         this.zombies[data.id] = {
-            sprite,
+            sprite: container,
             healthBar,
             data,
             size: config.size,
             targetX: x,
             targetY: y
         };
-        this.zombieSprites.add(sprite);
     }
 
     updateZombie(data) {

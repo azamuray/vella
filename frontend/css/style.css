@@ -439,14 +439,42 @@ html, body {
     width: 50%;
     height: 200px;
     z-index: 60;
+    touch-action: none;
 }
 
 #joystick-left {
     left: 0;
+    background: radial-gradient(circle at 80px 120px, rgba(74, 222, 128, 0.15) 0%, transparent 50%);
 }
 
 #joystick-right {
     right: 0;
+    background: radial-gradient(circle at calc(100% - 80px) 120px, rgba(233, 69, 96, 0.15) 0%, transparent 50%);
+}
+
+/* Joystick hint labels */
+#joystick-left::after {
+    content: 'MOVE';
+    position: absolute;
+    bottom: 10px;
+    left: 80px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(74, 222, 128, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#joystick-right::after {
+    content: 'AIM & SHOOT';
+    position: absolute;
+    bottom: 10px;
+    right: 80px;
+    transform: translateX(50%);
+    font-size: 10px;
+    color: rgba(233, 69, 96, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 /* HUD */
