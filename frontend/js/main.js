@@ -225,6 +225,7 @@ async function joinRoom(roomCode) {
     });
 
     window.VELLA.ws.on('wave_complete', (data) => {
+        console.log('[WAVE COMPLETE]', data);
         showWaveComplete(data);
     });
 
