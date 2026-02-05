@@ -616,6 +616,15 @@ async def websocket_endpoint(
 
                 if room.is_empty:
                     engine.room_manager.remove_room(room.room_code)
+                elif room.status == "wave_break" and room.all_players_ready() and room.player_count >= 1:
+                    # Start next wave if remaining players are all ready
+                    room.status = "countdown"
+                    room.countdown = room.WAVE_COUNTDOWN
+                    await room.broadcast({
+                        "type": "wave_countdown",
+                        "next_wave": room.wave_manager.current_wave + 1,
+                        "countdown": room.WAVE_COUNTDOWN
+                    })
 
                 room = None
                 player = None
@@ -644,9 +653,19 @@ async def websocket_endpoint(
                             db_player.highest_wave = room.wave_manager.current_wave
                         await db.commit()
 
-            # Notify others
+            # Notify others and check if wave should start
             if not room.is_empty:
                 await room.broadcast(room.get_lobby_state())
+
+                # Start next wave if remaining players are all ready
+                if room.status == "wave_break" and room.all_players_ready() and room.player_count >= 1:
+                    room.status = "countdown"
+                    room.countdown = room.WAVE_COUNTDOWN
+                    await room.broadcast({
+                        "type": "wave_countdown",
+                        "next_wave": room.wave_manager.current_wave + 1,
+                        "countdown": room.WAVE_COUNTDOWN
+                    })
             else:
                 engine.room_manager.remove_room(room.room_code)
 
