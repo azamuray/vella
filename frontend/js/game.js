@@ -331,8 +331,12 @@ export class GameManager {
         const player = this.players[data.id];
         if (!player) return;
 
+        // Save old state for comparison
+        const wasReloading = player.data?.reloading || false;
+        const oldHp = player.data?.hp;
+
         // Check if player took damage (for sound)
-        if (data.id === this.myId && player.data && data.hp < player.data.hp && !data.is_dead) {
+        if (data.id === this.myId && oldHp !== undefined && data.hp < oldHp && !data.is_dead) {
             this.playSound('player_hurt', 0.4);
         }
 
@@ -366,8 +370,8 @@ export class GameManager {
             const reloadFill = document.getElementById('reload-fill');
             if (data.reloading) {
                 // Play reload sound when reload starts
-                if (!player.data?.reloading) {
-                    this.playSound('weapon_switch', 0.3); // Use weapon_switch as reload sound
+                if (!wasReloading) {
+                    this.playSound('weapon_switch', 0.3);
                 }
                 reloadBar.classList.remove('hidden');
                 reloadFill.style.width = `${data.reload_progress * 100}%`;

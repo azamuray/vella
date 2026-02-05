@@ -267,11 +267,6 @@ async function joinRoom(roomCode) {
         }
     });
 
-    window.VELLA.ws.on('zombie_hurt', (data) => {
-        // Play zombie hurt sound
-        window.playSound('zombie_hurt', 0.3);
-    });
-
     window.VELLA.ws.on('player_died', (data) => {
         if (window.VELLA.game) {
             window.VELLA.game.onPlayerDied(data);
