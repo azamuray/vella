@@ -269,6 +269,19 @@ html, body {
     font-size: 0.85rem;
 }
 
+.controls-hint {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--secondary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.controls-hint p {
+    margin: 0.25rem 0;
+}
+
 /* Shop Screen */
 .shop-container {
     width: 100%;

@@ -181,7 +181,7 @@ export class GameManager {
                 zombie.sprite.y = Phaser.Math.Linear(zombie.sprite.y, zombie.targetY, 0.15);
                 if (zombie.healthBar) {
                     zombie.healthBar.x = zombie.sprite.x - 15;
-                    zombie.healthBar.y = zombie.sprite.y - zombie.sprite.height / 2 - 8;
+                    zombie.healthBar.y = zombie.sprite.y - (zombie.size || 20) - 8;
                 }
             }
         }
@@ -368,35 +368,41 @@ export class GameManager {
             return;
         }
 
-        const textureKey = `zombie_${data.type}`;
         const x = this.scaleX(data.x);
         const y = this.scaleY(data.y);
 
-        const textureExists = this.scene.textures.exists(textureKey);
-        console.log(`Creating zombie ${data.id} type=${data.type} at screen(${x.toFixed(0)}, ${y.toFixed(0)}) game(${data.x}, ${data.y}) texture=${textureKey} exists=${textureExists}`);
+        console.log(`Creating zombie ${data.id} type=${data.type} at screen(${x.toFixed(0)}, ${y.toFixed(0)}) game(${data.x}, ${data.y})`);
 
-        // Check if texture exists, use fallback if not
-        let sprite;
-        if (this.scene.textures.exists(textureKey)) {
-            sprite = this.scene.add.sprite(x, y, textureKey);
-        } else {
-            // Create fallback circle
-            const colors = {
-                'normal': 0x5a7247,
-                'fast': 0x8a7a5a,
-                'tank': 0x4a5a3a,
-                'boss': 0x7c2a2a
-            };
-            const sizes = {
-                'normal': 20,
-                'fast': 16,
-                'tank': 28,
-                'boss': 36
-            };
-            const size = sizes[data.type] || 20;
-            sprite = this.scene.add.circle(x, y, size, colors[data.type] || 0x5a7247);
-        }
-        sprite.setDepth(5);
+        // Zombie visual config
+        const zombieConfig = {
+            'normal': { color: 0x5a7247, size: 20, outline: 0x3a4a2a },
+            'fast': { color: 0x8a7a5a, size: 16, outline: 0x5a4a3a },
+            'tank': { color: 0x4a5a3a, size: 28, outline: 0x2a3a1a },
+            'boss': { color: 0x7c2a2a, size: 36, outline: 0x4c1a1a }
+        };
+        const config = zombieConfig[data.type] || zombieConfig.normal;
+
+        // Create zombie as graphics (guaranteed to work)
+        const graphics = this.scene.add.graphics();
+        graphics.setPosition(x, y);
+
+        // Outline
+        graphics.fillStyle(config.outline, 1);
+        graphics.fillCircle(0, 0, config.size + 2);
+
+        // Body
+        graphics.fillStyle(config.color, 1);
+        graphics.fillCircle(0, 0, config.size);
+
+        // Eyes (red dots)
+        graphics.fillStyle(0xff0000, 1);
+        graphics.fillCircle(-config.size * 0.3, -config.size * 0.2, config.size * 0.15);
+        graphics.fillCircle(config.size * 0.3, -config.size * 0.2, config.size * 0.15);
+
+        graphics.setDepth(5);
+
+        // Use graphics as sprite replacement
+        const sprite = graphics;
 
         // Health bar for tanks and bosses
         let healthBar = null;
@@ -409,6 +415,7 @@ export class GameManager {
             sprite,
             healthBar,
             data,
+            size: config.size,
             targetX: x,
             targetY: y
         };
