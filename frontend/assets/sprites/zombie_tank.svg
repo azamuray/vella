@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+  <!-- Huge body -->
+  <ellipse cx="36" cy="48" rx="22" ry="22" fill="#4a5a3a"/>
+  <!-- Massive shoulders -->
+  <ellipse cx="14" cy="40" rx="12" ry="16" fill="#4a5a3a"/>
+  <ellipse cx="58" cy="40" rx="12" ry="16" fill="#4a5a3a"/>
+  <!-- Small head -->
+  <circle cx="36" cy="18" r="12" fill="#5a6a4a"/>
+  <!-- Angry eyes -->
+  <rect x="28" y="14" width="6" height="4" fill="#ff4444"/>
+  <rect x="38" y="14" width="6" height="4" fill="#ff4444"/>
+  <!-- Grimace -->
+  <path d="M28 24 L36 28 L44 24" stroke="#2a1a0a" stroke-width="3" fill="none"/>
+  <!-- Huge fists -->
+  <circle cx="4" cy="52" r="8" fill="#5a6a4a"/>
+  <circle cx="68" cy="52" r="8" fill="#5a6a4a"/>
+  <!-- Chains/armor -->
+  <path d="M20 36 L52 36" stroke="#666" stroke-width="3"/>
+  <circle cx="26" cy="36" r="3" fill="#888"/>
+  <circle cx="36" cy="36" r="3" fill="#888"/>
+  <circle cx="46" cy="36" r="3" fill="#888"/>
+  <!-- Scars -->
+  <path d="M30 8 L40 14" stroke="#3a2a2a" stroke-width="2"/>
+  <path d="M24 44 L28 52" stroke="#3a2a2a" stroke-width="2"/>
+</svg>

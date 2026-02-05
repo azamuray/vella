@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 40">
+  <!-- Stock -->
+  <path d="M0 20 L16 16 L16 24 L0 28 Z" fill="#5a3a1a"/>
+  <path d="M2 21 L14 18 L14 23 L2 26 Z" fill="#4a2a0a"/>
+  <!-- Receiver -->
+  <rect x="14" y="14" width="24" height="12" rx="2" fill="#444"/>
+  <rect x="16" y="16" width="20" height="8" fill="#555"/>
+  <!-- Pump -->
+  <rect x="38" y="12" width="20" height="16" rx="2" fill="#333"/>
+  <rect x="40" y="14" width="16" height="12" fill="#444"/>
+  <!-- Grooves on pump -->
+  <path d="M42 14 L42 26 M46 14 L46 26 M50 14 L50 26 M54 14 L54 26" stroke="#333" stroke-width="1"/>
+  <!-- Barrel -->
+  <rect x="56" y="16" width="36" height="8" rx="1" fill="#333"/>
+  <ellipse cx="92" cy="20" rx="2" ry="4" fill="#222"/>
+  <!-- Magazine tube -->
+  <rect x="56" y="24" width="30" height="4" rx="1" fill="#444"/>
+  <!-- Trigger guard -->
+  <path d="M22 26 Q18 32 22 36 L30 36 L30 26" fill="none" stroke="#333" stroke-width="2"/>
+</svg>

@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://vella:vella@db:5432/vella
+      - REDIS_URL=redis://redis:6379
+      - BOT_TOKEN=${BOT_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - vella-network
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    ports:
+      - "9091:80"  # Local dev access
+    environment:
+      - VIRTUAL_HOST=${VIRTUAL_HOST:-vella.lovza.ru}
+      - LETSENCRYPT_HOST=${LETSENCRYPT_HOST:-vella.lovza.ru}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL:-admin@lovza.ru}
+    depends_on:
+      - backend
+    networks:
+      - vella-network
+      - web-proxy
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=vella
+      - POSTGRES_PASSWORD=vella
+      - POSTGRES_DB=vella
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vella"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vella-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - vella-network
+
+networks:
+  vella-network:
+    driver: bridge
+  web-proxy:
+    external: true
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- Massive mutated body -->
+  <ellipse cx="48" cy="60" rx="30" ry="32" fill="#3a4a2a"/>
+  <!-- Tumor growths -->
+  <circle cx="24" cy="50" r="10" fill="#4a3a3a"/>
+  <circle cx="72" cy="50" r="10" fill="#4a3a3a"/>
+  <circle cx="36" cy="72" r="8" fill="#4a3a3a"/>
+  <circle cx="60" cy="72" r="8" fill="#4a3a3a"/>
+  <!-- Giant arms -->
+  <ellipse cx="8" cy="54" rx="14" ry="20" fill="#3a4a2a"/>
+  <ellipse cx="88" cy="54" rx="14" ry="20" fill="#3a4a2a"/>
+  <!-- Head with crown/horns -->
+  <circle cx="48" cy="22" r="16" fill="#4a5a3a"/>
+  <!-- Bone horns -->
+  <path d="M32 16 L26 2 L30 14" fill="#e8e0d0"/>
+  <path d="M64 16 L70 2 L66 14" fill="#e8e0d0"/>
+  <!-- Glowing eyes -->
+  <circle cx="42" cy="20" r="5" fill="#ff0000">
+    <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="54" cy="20" r="5" fill="#ff0000">
+    <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="42" cy="20" r="2" fill="#fff"/>
+  <circle cx="54" cy="20" r="2" fill="#fff"/>
+  <!-- Huge jaw -->
+  <path d="M36 30 Q48 44 60 30" fill="#1a0a0a"/>
+  <path d="M38 30 L40 36 L42 30 M46 30 L48 38 L50 30 M54 30 L56 36 L58 30" fill="#e8e0d0"/>
+  <!-- Drool -->
+  <path d="M44 38 Q42 48 44 52" stroke="#5a8a5a" stroke-width="2" fill="none" opacity="0.7"/>
+  <path d="M52 38 Q54 46 52 50" stroke="#5a8a5a" stroke-width="2" fill="none" opacity="0.7"/>
+  <!-- Ribcage showing -->
+  <path d="M38 48 L40 56 M42 48 L44 58 M46 48 L48 58 M50 48 L52 58 M54 48 L56 56" stroke="#c8c0b0" stroke-width="2"/>
+</svg>

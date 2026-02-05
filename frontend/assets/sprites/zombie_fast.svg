@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <!-- Skinny body -->
+  <ellipse cx="20" cy="26" rx="6" ry="12" fill="#6a5a4a"/>
+  <!-- Head -->
+  <ellipse cx="20" cy="10" r="8" fill="#8a7a5a"/>
+  <!-- Wild eyes -->
+  <circle cx="16" cy="9" r="3" fill="#ffff00"/>
+  <circle cx="24" cy="9" r="3" fill="#ffff00"/>
+  <circle cx="16" cy="9" r="1.5" fill="#000"/>
+  <circle cx="24" cy="9" r="1.5" fill="#000"/>
+  <!-- Open screaming mouth -->
+  <ellipse cx="20" cy="15" rx="4" ry="3" fill="#1a0a0a"/>
+  <path d="M17 14 L18 16 L19 14" fill="#fff"/>
+  <path d="M21 14 L22 16 L23 14" fill="#fff"/>
+  <!-- Long arms -->
+  <path d="M6 20 Q2 26 4 32" stroke="#8a7a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M34 20 Q38 26 36 32" stroke="#8a7a5a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Claws -->
+  <path d="M3 32 L1 36 M4 32 L4 37 M5 32 L7 36" stroke="#444" stroke-width="1.5"/>
+  <path d="M35 32 L33 36 M36 32 L36 37 M37 32 L39 36" stroke="#444" stroke-width="1.5"/>
+  <!-- Speed lines -->
+  <path d="M0 20 L-4 20 M0 24 L-6 24 M0 28 L-4 28" stroke="#aaa" stroke-width="1" opacity="0.5"/>
+</svg>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>VELLA - Zombie Shooter</title>
+
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Phaser.js -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+    <!-- Nipple.js for virtual joysticks -->
+    <script src="https://unpkg.com/nipplejs@0.10.1/dist/nipplejs.min.js"></script>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loading-screen">
+        <div class="loader">
+            <div class="zombie-icon">🧟</div>
+            <h1>VELLA</h1>
+            <p>Loading...</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="load-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main menu -->
+    <div id="menu-screen" class="screen hidden">
+        <div class="menu-container">
+            <h1 class="game-title">🧟 VELLA</h1>
+            <p class="subtitle">Zombie Survival</p>
+
+            <div class="player-info">
+                <div class="stat">
+                    <span class="icon">💰</span>
+                    <span id="player-coins">0</span>
+                </div>
+                <div class="stat">
+                    <span class="icon">💀</span>
+                    <span id="player-kills">0</span>
+                </div>
+                <div class="stat">
+                    <span class="icon">🌊</span>
+                    <span id="player-wave">0</span>
+                </div>
+            </div>
+
+            <div class="menu-buttons">
+                <button class="btn btn-primary" id="btn-play">
+                    <span class="icon">🎮</span> Play
+                </button>
+                <button class="btn btn-secondary" id="btn-join">
+                    <span class="icon">🔗</span> Join Room
+                </button>
+                <button class="btn btn-secondary" id="btn-shop">
+                    <span class="icon">🔫</span> Shop
+                </button>
+            </div>
+
+            <div class="equipped-weapon">
+                <span>Equipped: </span>
+                <span id="equipped-weapon-name">Glock 17</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lobby screen -->
+    <div id="lobby-screen" class="screen hidden">
+        <div class="lobby-container">
+            <h2>Room: <span id="room-code">------</span></h2>
+            <button class="btn-copy" id="btn-copy-code">📋 Copy</button>
+
+            <div class="players-list" id="lobby-players">
+                <!-- Players will be added here -->
+            </div>
+
+            <div class="lobby-buttons">
+                <button class="btn btn-primary" id="btn-ready">
+                    <span id="ready-text">Ready</span>
+                </button>
+                <button class="btn btn-danger" id="btn-leave">Leave</button>
+            </div>
+
+            <p class="lobby-hint">All players must be ready to start</p>
+        </div>
+    </div>
+
+    <!-- Shop screen -->
+    <div id="shop-screen" class="screen hidden">
+        <div class="shop-container">
+            <div class="shop-header">
+                <button class="btn-back" id="btn-shop-back">← Back</button>
+                <h2>Weapon Shop</h2>
+                <div class="coins">💰 <span id="shop-coins">0</span></div>
+            </div>
+
+            <div class="weapons-grid" id="weapons-list">
+                <!-- Weapons will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Join room modal -->
+    <div id="join-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Join Room</h3>
+            <input type="text" id="input-room-code" placeholder="Enter room code" maxlength="6">
+            <div class="modal-buttons">
+                <button class="btn btn-primary" id="btn-join-confirm">Join</button>
+                <button class="btn btn-secondary" id="btn-join-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game container -->
+    <div id="game-container" class="hidden"></div>
+
+    <!-- Joystick zones (outside game canvas) -->
+    <div id="joystick-left" class="joystick-zone hidden"></div>
+    <div id="joystick-right" class="joystick-zone hidden"></div>
+
+    <!-- HUD (overlay on game) -->
+    <div id="hud" class="hidden">
+        <div class="hud-top">
+            <div class="wave-info">
+                <span class="label">Wave</span>
+                <span id="hud-wave">1</span>
+            </div>
+            <div class="zombies-info">
+                <span class="label">🧟</span>
+                <span id="hud-zombies">0</span>
+            </div>
+            <div class="kills-info">
+                <span class="label">💀</span>
+                <span id="hud-kills">0</span>
+            </div>
+            <div class="coins-info">
+                <span class="label">💰</span>
+                <span id="hud-coins">0</span>
+            </div>
+        </div>
+
+        <div class="hud-bottom">
+            <div class="health-bar">
+                <div class="health-fill" id="hud-health"></div>
+                <span class="health-text" id="hud-health-text">100/100</span>
+            </div>
+            <div class="ammo-info">
+                <span id="hud-ammo">17</span> / <span id="hud-max-ammo">17</span>
+                <span id="hud-weapon-name">Glock 17</span>
+            </div>
+            <div class="reload-bar hidden" id="reload-bar">
+                <div class="reload-fill" id="reload-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wave announcement -->
+    <div id="wave-announcement" class="hidden">
+        <h2>Wave <span id="announce-wave">1</span></h2>
+        <p id="announce-zombies">10 zombies incoming</p>
+    </div>
+
+    <!-- Game over screen -->
+    <div id="gameover-screen" class="screen hidden">
+        <div class="gameover-container">
+            <h1>Game Over</h1>
+            <div class="final-stats">
+                <div class="stat-row">
+                    <span>Wave Reached</span>
+                    <span id="final-wave">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Total Kills</span>
+                    <span id="final-kills">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Coins Earned</span>
+                    <span id="final-coins">0</span>
+                </div>
+            </div>
+
+            <div class="leaderboard" id="final-leaderboard">
+                <!-- Player stats will be added here -->
+            </div>
+
+            <button class="btn btn-primary" id="btn-play-again">Play Again</button>
+            <button class="btn btn-secondary" id="btn-back-menu">Back to Menu</button>
+        </div>
+    </div>
+
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>

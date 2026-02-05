@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 44">
+  <!-- Stock -->
+  <path d="M0 22 L20 16 L20 28 L0 32 Z" fill="#5a3a1a"/>
+  <path d="M2 23 L18 18 L18 27 L2 30 Z" fill="#4a2a0a"/>
+  <!-- Lower receiver -->
+  <rect x="18" y="18" width="30" height="14" rx="1" fill="#444"/>
+  <!-- Magazine -->
+  <path d="M28 32 L26 44 L38 44 L36 32" fill="#333"/>
+  <!-- Upper receiver -->
+  <rect x="18" y="12" width="50" height="10" rx="1" fill="#333"/>
+  <!-- Charging handle -->
+  <rect x="46" y="10" width="8" height="4" fill="#555"/>
+  <!-- Rail -->
+  <rect x="20" y="10" width="46" height="3" fill="#444"/>
+  <path d="M22 10 L22 7 M28 10 L28 7 M34 10 L34 7 M40 10 L40 7 M46 10 L46 7 M52 10 L52 7 M58 10 L58 7" stroke="#555" stroke-width="2"/>
+  <!-- Handguard -->
+  <rect x="66" y="14" width="30" height="10" rx="2" fill="#444"/>
+  <path d="M68 24 L68 30 M74 24 L74 30 M80 24 L80 30 M86 24 L86 30 M92 24 L92 30" stroke="#333" stroke-width="1"/>
+  <!-- Barrel -->
+  <rect x="94" y="16" width="16" height="6" fill="#333"/>
+  <!-- Front sight -->
+  <rect x="108" y="12" width="3" height="6" fill="#222"/>
+  <!-- Grip -->
+  <rect x="36" y="30" width="10" height="12" rx="2" fill="#3a2a1a"/>
+  <!-- Trigger -->
+  <rect x="30" y="32" width="2" height="6" fill="#333"/>
+</svg>
