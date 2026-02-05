@@ -39,6 +39,7 @@ class GameEngine:
     async def _game_loop(self):
         """Main game loop - runs at fixed tick rate"""
         dt = 1.0 / self.TICK_RATE
+        tick_counter = 0
 
         while self.running:
             loop_start = asyncio.get_event_loop().time()
@@ -49,6 +50,11 @@ class GameEngine:
                     try:
                         events = room.update(dt)
 
+                        # Debug log every 40 ticks (2 seconds)
+                        tick_counter += 1
+                        if tick_counter % 40 == 0:
+                            print(f"[Engine] Room {room.room_code}: status={room.status}, zombies={len(room.zombies)}, players={len(room.players)}")
+
                         # Broadcast events
                         for event in events:
                             await room.broadcast(event)
@@ -57,7 +63,9 @@ class GameEngine:
                         await room.broadcast(room.get_state())
 
                     except Exception as e:
+                        import traceback
                         print(f"Error updating room {room.room_code}: {e}")
+                        traceback.print_exc()
 
                 # Clean up empty rooms
                 if room.is_empty:

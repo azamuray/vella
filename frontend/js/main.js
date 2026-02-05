@@ -190,6 +190,13 @@ async function joinRoom(roomCode) {
     });
 
     window.VELLA.ws.on('state', (data) => {
+        // Debug: log zombie count every 20 state updates
+        if (window.VELLA._stateCount === undefined) window.VELLA._stateCount = 0;
+        window.VELLA._stateCount++;
+        if (window.VELLA._stateCount % 20 === 1) {
+            console.log(`[State] tick=${data.tick} zombies=${data.zombies?.length || 0} players=${data.players?.length || 0}`);
+        }
+
         if (window.VELLA.game) {
             window.VELLA.game.updateState(data);
         }

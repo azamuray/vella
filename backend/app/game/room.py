@@ -148,6 +148,7 @@ class Room:
 
     def start_game(self):
         """Start the game from lobby"""
+        print(f"[Room {self.room_code}] Starting game with {len(self.players)} players")
         self.status = "countdown"
         self.countdown = self.WAVE_COUNTDOWN
         self.wave_manager.current_wave = 0
@@ -175,6 +176,7 @@ class Room:
             if self.countdown <= 0:
                 self.status = "playing"
                 wave_info = self.wave_manager.start_wave(1)
+                print(f"[Room {self.room_code}] Wave 1 started: {wave_info}")
                 events.append({"type": "wave_start", **wave_info})
 
         elif self.status == "playing":
@@ -182,6 +184,7 @@ class Room:
             for zombie_type in self.wave_manager.update(dt):
                 zombie = self.zombie_spawner.spawn_zombie(zombie_type)
                 self.zombies[zombie.id] = zombie
+                print(f"[Room {self.room_code}] Spawned zombie {zombie.id} type={zombie_type} at ({zombie.x:.0f}, {zombie.y:.0f})")
 
             # Update players
             players_list = list(self.players.values())
