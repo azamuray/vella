@@ -322,6 +322,15 @@ function setupRoomHandlers() {
 
     window.VELLA.ws.on('lobby_update', (data) => {
         updateLobbyPlayers(data.players);
+
+        // Update ready status during wave break
+        if (window.VELLA.inWaveBreak && data.players) {
+            const readyCount = data.players.filter(p => p.is_ready).length;
+            const totalCount = data.players.length;
+            const statusText = `${readyCount}/${totalCount} players ready`;
+            document.getElementById('ready-status').textContent = statusText;
+            document.getElementById('shop-ready-status').textContent = statusText;
+        }
     });
 
     window.VELLA.ws.on('game_start', (data) => {
