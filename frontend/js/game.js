@@ -184,8 +184,8 @@ export class GameManager {
                 zombie.sprite.x = Phaser.Math.Linear(zombie.sprite.x, zombie.targetX, 0.15);
                 zombie.sprite.y = Phaser.Math.Linear(zombie.sprite.y, zombie.targetY, 0.15);
                 if (zombie.healthBar) {
-                    zombie.healthBar.x = zombie.sprite.x - zombie.size * 0.75;
-                    zombie.healthBar.y = zombie.sprite.y - zombie.size - 8;
+                    zombie.healthBar.x = zombie.sprite.x - 15;
+                    zombie.healthBar.y = zombie.sprite.y - (zombie.size || 20) - 8;
                 }
             }
         }
@@ -375,31 +375,27 @@ export class GameManager {
         const x = this.scaleX(data.x);
         const y = this.scaleY(data.y);
 
-        // Scale hitbox size from game coords to screen coords
-        const hitboxSize = data.size || 24;  // Use server hitbox size
-        const scaledSize = this.scaleSize(hitboxSize);
-
-        // Zombie color config
-        const zombieColors = {
-            'normal': 0x5a7247,
-            'fast': 0x8a7a5a,
-            'tank': 0x4a5a3a,
-            'boss': 0x7c2a2a
+        // Visual sizes (screen pixels) - nice looking sizes
+        const zombieConfig = {
+            'normal': { color: 0x5a7247, size: 20 },
+            'fast': { color: 0x8a7a5a, size: 16 },
+            'tank': { color: 0x4a5a3a, size: 28 },
+            'boss': { color: 0x7c2a2a, size: 36 }
         };
-        const color = zombieColors[data.type] || zombieColors.normal;
+        const config = zombieConfig[data.type] || zombieConfig.normal;
 
         // Create zombie container
         const container = this.scene.add.container(x, y);
         container.setDepth(5);
 
-        // Body (circle) - visual matches hitbox exactly
-        const body = this.scene.add.circle(0, 0, scaledSize, color);
-        body.setStrokeStyle(2, 0x222222);
+        // Body (circle)
+        const body = this.scene.add.circle(0, 0, config.size, config.color);
+        body.setStrokeStyle(3, 0x222222);
         container.add(body);
 
         // Eyes (red)
-        const leftEye = this.scene.add.circle(-scaledSize * 0.35, -scaledSize * 0.2, scaledSize * 0.18, 0xff0000);
-        const rightEye = this.scene.add.circle(scaledSize * 0.35, -scaledSize * 0.2, scaledSize * 0.18, 0xff0000);
+        const leftEye = this.scene.add.circle(-config.size * 0.35, -config.size * 0.2, config.size * 0.18, 0xff0000);
+        const rightEye = this.scene.add.circle(config.size * 0.35, -config.size * 0.2, config.size * 0.18, 0xff0000);
         container.add(leftEye);
         container.add(rightEye);
 
@@ -407,16 +403,15 @@ export class GameManager {
         let healthBar = null;
         if (data.type === 'tank' || data.type === 'boss') {
             healthBar = this.scene.add.graphics().setDepth(6);
-            this.drawHealthBar(healthBar, data.hp, data.max_hp, scaledSize * 1.5, 0xff4444);
-            healthBar.setPosition(x - scaledSize * 0.75, y - scaledSize - 8);
+            this.drawHealthBar(healthBar, data.hp, data.max_hp, 30, 0xff4444);
+            healthBar.setPosition(x - 15, y - config.size - 8);
         }
 
         this.zombies[data.id] = {
             sprite: container,
             healthBar,
             data,
-            size: scaledSize,
-            hitboxSize: hitboxSize,
+            size: config.size,
             targetX: x,
             targetY: y
         };
@@ -434,9 +429,9 @@ export class GameManager {
         zombie.targetX = this.scaleX(data.x);
         zombie.targetY = this.scaleY(data.y);
 
-        // Update health bar with scaled size
+        // Update health bar
         if (zombie.healthBar) {
-            this.drawHealthBar(zombie.healthBar, data.hp, data.max_hp, zombie.size * 1.5, 0xff4444);
+            this.drawHealthBar(zombie.healthBar, data.hp, data.max_hp, 30, 0xff4444);
         }
 
         zombie.data = data;

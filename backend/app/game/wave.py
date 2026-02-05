@@ -10,7 +10,7 @@ ZOMBIE_TYPES = {
         "speed": 80,  # pixels per second
         "damage": 10,
         "coins": 5,
-        "size": 24,  # collision radius
+        "size": 60,  # collision radius - generous hitbox for mobile
         "color": "#4a7c59"  # for debug/placeholder
     },
     "fast": {
@@ -18,7 +18,7 @@ ZOMBIE_TYPES = {
         "speed": 150,
         "damage": 8,
         "coins": 8,
-        "size": 20,
+        "size": 50,
         "color": "#7c4a4a"
     },
     "tank": {
@@ -26,7 +26,7 @@ ZOMBIE_TYPES = {
         "speed": 50,
         "damage": 25,
         "coins": 20,
-        "size": 36,
+        "size": 80,
         "color": "#4a4a7c"
     },
     "boss": {
@@ -34,7 +34,7 @@ ZOMBIE_TYPES = {
         "speed": 40,
         "damage": 50,
         "coins": 100,
-        "size": 48,
+        "size": 100,
         "color": "#7c2a2a"
     }
 }
