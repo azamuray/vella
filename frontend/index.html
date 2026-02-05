@@ -116,6 +116,18 @@
         </div>
     </div>
 
+    <!-- Exit confirmation modal -->
+    <div id="exit-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Exit Game?</h3>
+            <p class="exit-text">Your progress will be saved.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="btn-exit-confirm">Exit</button>
+                <button class="btn btn-secondary" id="btn-exit-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Browse rooms modal -->
     <div id="rooms-modal" class="modal hidden">
         <div class="modal-content rooms-modal">
@@ -139,6 +151,8 @@
 
     <!-- HUD (overlay on game) -->
     <div id="hud" class="hidden">
+        <!-- Pause button -->
+        <button id="btn-pause" class="pause-btn">⏸</button>
         <!-- Debug button -->
         <button id="btn-kill-all" class="debug-btn">☠️ Kill All</button>
         <div class="hud-top">
@@ -227,6 +241,6 @@
         </div>
     </div>
 
-    <script type="module" src="/js/main.js?v=20"></script>
+    <script type="module" src="/js/main.js?v=21"></script>
 </body>
 </html>

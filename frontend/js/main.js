@@ -202,6 +202,22 @@ function setupEventListeners() {
     document.getElementById('btn-shop-ready').addEventListener('click', () => {
         sendReady();
     });
+
+    // Pause button - show exit confirmation
+    document.getElementById('btn-pause').addEventListener('click', () => {
+        showModal('exit-modal');
+    });
+
+    // Exit confirm
+    document.getElementById('btn-exit-confirm').addEventListener('click', () => {
+        hideModal('exit-modal');
+        leaveRoom();
+    });
+
+    // Exit cancel
+    document.getElementById('btn-exit-cancel').addEventListener('click', () => {
+        hideModal('exit-modal');
+    });
 }
 
 function sendReady() {

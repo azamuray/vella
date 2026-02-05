@@ -496,6 +496,30 @@ html, body {
     padding: env(safe-area-inset-top, 10px) 10px env(safe-area-inset-bottom, 10px);
 }
 
+/* Pause button */
+.pause-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    font-size: 16px;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pause-btn:active {
+    background: rgba(0, 0, 0, 0.6);
+}
+
 /* Debug button */
 .debug-btn {
     position: absolute;
@@ -511,6 +535,12 @@ html, body {
     pointer-events: auto;
     cursor: pointer;
     z-index: 100;
+}
+
+/* Exit modal text */
+.exit-text {
+    color: var(--text-dim);
+    margin-bottom: 1.5rem;
 }
 
 .hud-top {
