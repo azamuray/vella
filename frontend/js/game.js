@@ -19,7 +19,7 @@ export class GameManager {
         this.projectiles = {};
         this.currentWave = 0;
         this.kills = 0;
-        this.coins = 0;
+        this.coins = window.VELLA.player?.coins || 0;  // Start with saved coins
 
         // Input state
         this.inputSeq = 0;
