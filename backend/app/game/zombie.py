@@ -88,7 +88,8 @@ class ZombieEntity:
             "x": round(self.x, 1),
             "y": round(self.y, 1),
             "hp": self.hp,
-            "max_hp": self.max_hp
+            "max_hp": self.max_hp,
+            "size": self.size  # Send hitbox size for accurate visual rendering
         }
 
 
