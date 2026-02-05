@@ -13,8 +13,6 @@
     <!-- Phaser.js -->
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 
-    <!-- Custom joysticks (no external library needed) -->
-
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -23,7 +21,7 @@
         <div class="loader">
             <div class="zombie-icon">🧟</div>
             <h1>VELLA</h1>
-            <p>Loading...</p>
+            <p>Загрузка...</p>
             <div class="progress-bar">
                 <div class="progress-fill" id="load-progress"></div>
             </div>
@@ -34,7 +32,7 @@
     <div id="menu-screen" class="screen hidden">
         <div class="menu-container">
             <h1 class="game-title">🧟 VELLA</h1>
-            <p class="subtitle">Zombie Survival</p>
+            <p class="subtitle">Выживание среди зомби</p>
 
             <div class="player-info">
                 <div class="stat">
@@ -53,18 +51,18 @@
 
             <div class="menu-buttons">
                 <button class="btn btn-primary" id="btn-create-room">
-                    <span class="icon">➕</span> Create Room
+                    <span class="icon">➕</span> Создать комнату
                 </button>
                 <button class="btn btn-secondary" id="btn-browse-rooms">
-                    <span class="icon">🌐</span> Browse Rooms
+                    <span class="icon">🌐</span> Найти игру
                 </button>
                 <button class="btn btn-secondary" id="btn-shop">
-                    <span class="icon">🔫</span> Shop
+                    <span class="icon">🔫</span> Магазин
                 </button>
             </div>
 
             <div class="equipped-weapon">
-                <span>Equipped: </span>
+                <span>Оружие: </span>
                 <span id="equipped-weapon-name">Glock 17</span>
             </div>
         </div>
@@ -73,8 +71,8 @@
     <!-- Lobby screen -->
     <div id="lobby-screen" class="screen hidden">
         <div class="lobby-container">
-            <h2>Room: <span id="room-code">------</span></h2>
-            <button class="btn-copy" id="btn-copy-code">📋 Copy</button>
+            <h2>Комната: <span id="room-code">------</span></h2>
+            <button class="btn-copy" id="btn-copy-code">📋 Копировать</button>
 
             <div class="players-list" id="lobby-players">
                 <!-- Players will be added here -->
@@ -82,15 +80,15 @@
 
             <div class="lobby-buttons">
                 <button class="btn btn-primary" id="btn-ready">
-                    <span id="ready-text">Ready</span>
+                    <span id="ready-text">Готов</span>
                 </button>
-                <button class="btn btn-danger" id="btn-leave">Leave</button>
+                <button class="btn btn-danger" id="btn-leave">Выйти</button>
             </div>
 
-            <p class="lobby-hint">Press Ready to start (1-10 players)</p>
+            <p class="lobby-hint">Нажми Готов чтобы начать (1-10 игроков)</p>
             <div class="controls-hint">
-                <p>🕹️ Left joystick — Move</p>
-                <p>🎯 Right joystick — Aim & Auto-shoot</p>
+                <p>🕹️ Левый джойстик — Движение</p>
+                <p>🎯 Правый джойстик — Прицел и стрельба</p>
             </div>
         </div>
     </div>
@@ -99,15 +97,15 @@
     <div id="shop-screen" class="screen hidden">
         <div class="shop-container">
             <div class="shop-header">
-                <button class="btn-back" id="btn-shop-back">← Back</button>
-                <h2>Weapon Shop</h2>
+                <button class="btn-back" id="btn-shop-back">← Назад</button>
+                <h2>Магазин</h2>
                 <div class="coins">💰 <span id="shop-coins">0</span></div>
             </div>
 
             <!-- Ready button in shop (only visible during wave break) -->
             <div id="shop-ready-bar" class="shop-ready-bar hidden">
-                <span id="shop-ready-status">Waiting...</span>
-                <button class="btn btn-primary btn-sm" id="btn-shop-ready">✓ Ready</button>
+                <span id="shop-ready-status">Ожидание...</span>
+                <button class="btn btn-primary btn-sm" id="btn-shop-ready">✓ Готов</button>
             </div>
 
             <div class="weapons-grid" id="weapons-list">
@@ -119,11 +117,11 @@
     <!-- Exit confirmation modal -->
     <div id="exit-modal" class="modal hidden">
         <div class="modal-content">
-            <h3>Exit Game?</h3>
-            <p class="exit-text">Your progress will be saved.</p>
+            <h3>Выйти из игры?</h3>
+            <p class="exit-text">Прогресс будет сохранён.</p>
             <div class="modal-buttons">
-                <button class="btn btn-danger" id="btn-exit-confirm">Exit</button>
-                <button class="btn btn-secondary" id="btn-exit-cancel">Cancel</button>
+                <button class="btn btn-danger" id="btn-exit-confirm">Выйти</button>
+                <button class="btn btn-secondary" id="btn-exit-cancel">Отмена</button>
             </div>
         </div>
     </div>
@@ -131,13 +129,13 @@
     <!-- Browse rooms modal -->
     <div id="rooms-modal" class="modal hidden">
         <div class="modal-content rooms-modal">
-            <h3>🌐 Public Rooms</h3>
+            <h3>🌐 Публичные комнаты</h3>
             <div class="rooms-list" id="rooms-list">
-                <p class="loading-rooms">Loading...</p>
+                <p class="loading-rooms">Загрузка...</p>
             </div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" id="btn-rooms-refresh">🔄 Refresh</button>
-                <button class="btn btn-secondary" id="btn-rooms-cancel">Close</button>
+                <button class="btn btn-secondary" id="btn-rooms-refresh">🔄 Обновить</button>
+                <button class="btn btn-secondary" id="btn-rooms-cancel">Закрыть</button>
             </div>
         </div>
     </div>
@@ -154,10 +152,10 @@
         <!-- Pause button -->
         <button id="btn-pause" class="pause-btn">⏸</button>
         <!-- Debug button -->
-        <button id="btn-kill-all" class="debug-btn">☠️ Kill All</button>
+        <button id="btn-kill-all" class="debug-btn">☠️ Убить всех</button>
         <div class="hud-top">
             <div class="wave-info">
-                <span class="label">Wave</span>
+                <span class="label">Волна</span>
                 <span id="hud-wave">1</span>
             </div>
             <div class="zombies-info">
@@ -191,23 +189,23 @@
 
     <!-- Wave announcement -->
     <div id="wave-announcement" class="hidden">
-        <h2>Wave <span id="announce-wave">1</span></h2>
-        <p id="announce-zombies">10 zombies incoming</p>
+        <h2>Волна <span id="announce-wave">1</span></h2>
+        <p id="announce-zombies">10 зомби приближаются</p>
     </div>
 
     <!-- Wave complete overlay -->
     <div id="wave-complete" class="screen hidden">
         <div class="wave-complete-container">
-            <h2>Wave <span id="complete-wave">1</span> Complete!</h2>
-            <div class="wave-bonus">+<span id="wave-bonus">50</span> coins</div>
-            <p class="next-wave-text">Next: Wave <span id="next-wave-num">2</span></p>
-            <p class="ready-status" id="ready-status">Waiting for players...</p>
+            <h2>Волна <span id="complete-wave">1</span> пройдена!</h2>
+            <div class="wave-bonus">+<span id="wave-bonus">50</span> монет</div>
+            <p class="next-wave-text">Следующая: Волна <span id="next-wave-num">2</span></p>
+            <p class="ready-status" id="ready-status">Ожидание игроков...</p>
             <div class="wave-complete-buttons">
                 <button class="btn btn-primary" id="btn-next-wave">
-                    ✓ Ready
+                    ✓ Готов
                 </button>
                 <button class="btn btn-secondary" id="btn-wave-shop">
-                    🔫 Shop
+                    🔫 Магазин
                 </button>
             </div>
         </div>
@@ -216,18 +214,18 @@
     <!-- Game over screen -->
     <div id="gameover-screen" class="screen hidden">
         <div class="gameover-container">
-            <h1>Game Over</h1>
+            <h1>Игра окончена</h1>
             <div class="final-stats">
                 <div class="stat-row">
-                    <span>Wave Reached</span>
+                    <span>Волна</span>
                     <span id="final-wave">0</span>
                 </div>
                 <div class="stat-row">
-                    <span>Total Kills</span>
+                    <span>Убийств</span>
                     <span id="final-kills">0</span>
                 </div>
                 <div class="stat-row">
-                    <span>Coins Earned</span>
+                    <span>Монет</span>
                     <span id="final-coins">0</span>
                 </div>
             </div>
@@ -236,11 +234,11 @@
                 <!-- Player stats will be added here -->
             </div>
 
-            <button class="btn btn-primary" id="btn-play-again">Play Again</button>
-            <button class="btn btn-secondary" id="btn-back-menu">Back to Menu</button>
+            <button class="btn btn-primary" id="btn-play-again">Играть снова</button>
+            <button class="btn btn-secondary" id="btn-back-menu">В меню</button>
         </div>
     </div>
 
-    <script type="module" src="/js/main.js?v=21"></script>
+    <script type="module" src="/js/main.js?v=22"></script>
 </body>
 </html>

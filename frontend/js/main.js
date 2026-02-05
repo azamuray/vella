@@ -153,7 +153,7 @@ function setupEventListeners() {
         if (window.VELLA.ws) {
             const isReady = document.getElementById('btn-ready').classList.toggle('ready');
             window.VELLA.ws.send({ type: 'ready', is_ready: isReady });
-            document.getElementById('ready-text').textContent = isReady ? 'Not Ready' : 'Ready';
+            document.getElementById('ready-text').textContent = isReady ? 'Не готов' : 'Готов';
         }
     });
 
@@ -226,12 +226,12 @@ function sendReady() {
 
         // Update button states
         const waveReadyBtn = document.getElementById('btn-next-wave');
-        waveReadyBtn.textContent = '✓ Ready!';
+        waveReadyBtn.textContent = '✓ Готов!';
         waveReadyBtn.classList.add('ready');
         waveReadyBtn.disabled = true;
 
         const shopReadyBtn = document.getElementById('btn-shop-ready');
-        shopReadyBtn.textContent = '✓ Ready!';
+        shopReadyBtn.textContent = '✓ Готов!';
         shopReadyBtn.disabled = true;
     }
 }
@@ -250,7 +250,7 @@ async function loadPublicRooms() {
         const rooms = await response.json();
 
         if (rooms.length === 0) {
-            listEl.innerHTML = '<p class="no-rooms">No public rooms available.<br>Create your own!</p>';
+            listEl.innerHTML = '<p class="no-rooms">Нет доступных комнат.<br>Создай свою!</p>';
             return;
         }
 
@@ -261,9 +261,9 @@ async function loadPublicRooms() {
             item.innerHTML = `
                 <div class="room-info">
                     <div class="room-host">${room.host || 'Unknown'}</div>
-                    <div class="room-players">${room.player_count}/${room.max_players} players</div>
+                    <div class="room-players">${room.player_count}/${room.max_players} игроков</div>
                 </div>
-                <button class="btn btn-primary btn-join-room" data-code="${room.room_code}">Join</button>
+                <button class="btn btn-primary btn-join-room" data-code="${room.room_code}">Войти</button>
             `;
             listEl.appendChild(item);
         }
@@ -276,7 +276,7 @@ async function loadPublicRooms() {
             });
         });
     } catch (error) {
-        listEl.innerHTML = '<p class="no-rooms">Failed to load rooms</p>';
+        listEl.innerHTML = '<p class="no-rooms">Ошибка загрузки</p>';
         console.error('Failed to load rooms:', error);
     }
 }
@@ -327,7 +327,7 @@ function setupRoomHandlers() {
     });
 
     window.VELLA.ws.on('error', (data) => {
-        alert(data.message || 'Error');
+        alert(data.message || 'Ошибка');
         hideScreen('lobby-screen');
         showScreen('menu-screen');
         if (window.VELLA.ws) {
@@ -343,7 +343,7 @@ function setupRoomHandlers() {
         if (window.VELLA.inWaveBreak && data.players) {
             const readyCount = data.players.filter(p => p.is_ready).length;
             const totalCount = data.players.length;
-            const statusText = `${readyCount}/${totalCount} players ready`;
+            const statusText = `${readyCount}/${totalCount} готовы`;
             document.getElementById('ready-status').textContent = statusText;
             document.getElementById('shop-ready-status').textContent = statusText;
         }
@@ -448,7 +448,7 @@ function updateLobbyPlayers(players) {
         row.innerHTML = `
             <span class="player-name">${player.username || 'Player'}</span>
             <span class="player-status ${player.is_ready ? 'ready' : 'not-ready'}">
-                ${player.is_ready ? '✓ Ready' : 'Waiting...'}
+                ${player.is_ready ? '✓ Готов' : 'Ожидание...'}
             </span>
         `;
         container.appendChild(row);
@@ -474,7 +474,7 @@ function startGame(data) {
 function showWaveAnnouncement(wave, zombieCount) {
     const el = document.getElementById('wave-announcement');
     document.getElementById('announce-wave').textContent = wave;
-    document.getElementById('announce-zombies').textContent = `${zombieCount} zombies incoming`;
+    document.getElementById('announce-zombies').textContent = `${zombieCount} зомби приближаются`;
 
     // Play wave start sound (zombie growl)
     window.playSound('zombie_attack', 0.6);
@@ -526,7 +526,7 @@ function showWaveComplete(data) {
 
     // Reset ready button state
     const readyBtn = document.getElementById('btn-next-wave');
-    readyBtn.textContent = '✓ Ready';
+    readyBtn.textContent = '✓ Готов';
     readyBtn.classList.remove('ready');
     readyBtn.disabled = false;
 
@@ -652,21 +652,21 @@ function renderWeapons(weapons) {
                     <div class="weapon-price premium-price">⭐ ${weapon.price_stars} Stars</div>
                     <div class="weapon-desc">${weapon.description || ''}</div>
                     <button class="btn btn-premium buy-stars-btn" data-code="${weapon.code}">
-                        Buy with Stars
+                        Купить за Stars
                     </button>
                 `;
             } else {
                 priceSection = `
                     <div class="weapon-price">💰 ${weapon.price_coins}</div>
                     <button class="btn btn-primary buy-coins-btn" ${!canAfford ? 'disabled' : ''} data-code="${weapon.code}">
-                        Buy
+                        Купить
                     </button>
                 `;
             }
         } else if (equipped) {
-            priceSection = `<button class="btn btn-secondary" disabled>Equipped</button>`;
+            priceSection = `<button class="btn btn-secondary" disabled>Выбрано</button>`;
         } else {
-            priceSection = `<button class="btn btn-primary equip-btn" data-code="${weapon.code}">Equip</button>`;
+            priceSection = `<button class="btn btn-primary equip-btn" data-code="${weapon.code}">Выбрать</button>`;
         }
 
         card.innerHTML = `
@@ -736,7 +736,7 @@ async function buyWeapon(code) {
 async function buyWithStars(code) {
     const tg = window.Telegram?.WebApp;
     if (!tg) {
-        alert('Telegram WebApp not available');
+        alert('Telegram WebApp недоступен');
         return;
     }
 
@@ -748,7 +748,7 @@ async function buyWithStars(code) {
 
         if (!response.ok) {
             const error = await response.json();
-            alert(error.detail || 'Failed to create invoice');
+            alert(error.detail || 'Ошибка создания счёта');
             return;
         }
 
@@ -759,7 +759,7 @@ async function buyWithStars(code) {
             console.log('[Payment] Status:', status);
             if (status === 'paid') {
                 window.playSound('weapon_switch', 0.5);
-                alert('Purchase successful! 🎉');
+                alert('Покупка успешна! 🎉');
                 await loadPlayerData();
                 // Refresh shop (keep inGameShop state)
                 if (window.VELLA.inGameShop) {
@@ -768,13 +768,13 @@ async function buyWithStars(code) {
                     showShop();
                 }
             } else if (status === 'failed') {
-                alert('Payment failed');
+                alert('Оплата не прошла');
             }
             // 'cancelled' - user closed the dialog
         });
     } catch (error) {
         console.error('Failed to buy with Stars:', error);
-        alert('Error processing payment');
+        alert('Ошибка обработки платежа');
     }
 }
 

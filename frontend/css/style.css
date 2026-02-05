@@ -462,29 +462,29 @@ html, body {
 
 /* Joystick hint labels */
 #joystick-left::after {
-    content: 'MOVE';
+    content: 'ДВИЖЕНИЕ';
     position: absolute;
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     color: rgba(74, 222, 128, 0.7);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
 #joystick-right::after {
-    content: 'SHOOT';
+    content: 'СТРЕЛЬБА';
     position: absolute;
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     color: rgba(233, 69, 96, 0.7);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
 /* HUD */
