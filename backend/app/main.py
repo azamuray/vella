@@ -4,6 +4,7 @@ FastAPI + WebSocket Backend
 """
 import os
 import json
+import asyncio
 import httpx
 from typing import Optional
 from contextlib import asynccontextmanager
@@ -46,9 +47,28 @@ async def lifespan(app: FastAPI):
     await engine.start()
     await world_engine.start()
 
+    # Start Telegram bot polling as background task
+    bot_task = None
+    if BOT_TOKEN:
+        from .bot.polling import start_polling
+        bot_task = asyncio.create_task(start_polling())
+        print("[Bot] Polling task started")
+    else:
+        print("[Bot] No BOT_TOKEN, skipping bot startup")
+
     yield
 
     # Shutdown
+    if bot_task:
+        from .bot.polling import stop_polling
+        await stop_polling()
+        bot_task.cancel()
+        try:
+            await bot_task
+        except asyncio.CancelledError:
+            pass
+        print("[Bot] Stopped")
+
     await world_engine.stop()
     await engine.stop()
     if redis_client:

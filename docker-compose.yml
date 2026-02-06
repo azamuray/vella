@@ -9,6 +9,8 @@ services:
       - REDIS_URL=redis://redis:6379
       - BOT_TOKEN=${BOT_TOKEN:-}
       - DEV_MODE=${DEV_MODE:-true}
+      - WEBAPP_URL=${WEBAPP_URL:-https://vella.lovza.ru}
+      - PYTHONUNBUFFERED=1
     depends_on:
       db:
         condition: service_healthy

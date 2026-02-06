@@ -60,6 +60,32 @@ class ClanMember(Base):
     )
 
 
+class JoinRequest(Base):
+    """Заявка на вступление в клан (ожидает одобрения админа)"""
+    __tablename__ = "join_requests"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    clan_id = Column(Integer, ForeignKey("clans.id", ondelete="CASCADE"))
+    player_id = Column(BigInteger, ForeignKey("players.telegram_id", ondelete="CASCADE"))
+
+    # Telegram message tracking
+    chat_id = Column(BigInteger, nullable=False)
+    message_id = Column(Integer, nullable=True)
+
+    status = Column(String(16), default="pending")  # pending, approved, rejected
+    created_at = Column(DateTime, server_default=func.now())
+    resolved_at = Column(DateTime, nullable=True)
+    resolved_by = Column(BigInteger, nullable=True)
+
+    # Relationships
+    clan = relationship("Clan")
+    player = relationship("Player")
+
+    __table_args__ = (
+        Index('idx_join_request_pending', 'clan_id', 'player_id', 'status'),
+    )
+
+
 class BuildingType(Base):
     """Типы зданий (справочник)"""
     __tablename__ = "building_types"
