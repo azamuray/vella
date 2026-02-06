@@ -1,29 +1,179 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <!-- Top-down view of soldier -->
+  <defs>
+    <radialGradient id="p_skin" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#d4a574"/>
+      <stop offset="70%" stop-color="#c49464"/>
+      <stop offset="100%" stop-color="#b48454"/>
+    </radialGradient>
+    <linearGradient id="p_vest" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a5a3a"/>
+      <stop offset="100%" stop-color="#3a4a2a"/>
+    </linearGradient>
+    <linearGradient id="p_pants" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a5040"/>
+      <stop offset="100%" stop-color="#4a4030"/>
+    </linearGradient>
+    <linearGradient id="p_gun_metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a4a4a"/>
+      <stop offset="40%" stop-color="#333333"/>
+      <stop offset="100%" stop-color="#222222"/>
+    </linearGradient>
+    <linearGradient id="p_gun_barrel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#555555"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </linearGradient>
+    <radialGradient id="p_helmet" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#6a7a5a"/>
+      <stop offset="60%" stop-color="#5a6a4a"/>
+      <stop offset="100%" stop-color="#4a5a3a"/>
+    </radialGradient>
+  </defs>
 
-  <!-- Body/Torso (oval) -->
-  <ellipse cx="24" cy="26" rx="12" ry="14" fill="#4a6741"/>
+  <!-- Shadow -->
+  <ellipse cx="24" cy="26" rx="10" ry="13" fill="#00000025"/>
 
-  <!-- Shoulders -->
-  <ellipse cx="24" cy="20" rx="16" ry="8" fill="#3d5a35"/>
+  <!-- Legs / combat pants -->
+  <rect x="17" y="33" width="5" height="9" rx="2" fill="url(#p_pants)" transform="rotate(-3 19 37)"/>
+  <rect x="26" y="33" width="5" height="9" rx="2" fill="url(#p_pants)" transform="rotate(3 29 37)"/>
+  <!-- Knee pads -->
+  <ellipse cx="19.5" cy="37" rx="2.2" ry="1.5" fill="#3a3a2a"/>
+  <ellipse cx="19.5" cy="37" rx="1.5" ry="0.8" fill="#4a4a3a" opacity="0.5"/>
+  <ellipse cx="28.5" cy="37" rx="2.2" ry="1.5" fill="#3a3a2a"/>
+  <ellipse cx="28.5" cy="37" rx="1.5" ry="0.8" fill="#4a4a3a" opacity="0.5"/>
+  <!-- Cargo pockets -->
+  <rect x="15.5" y="35" width="2.5" height="2" rx="0.3" fill="#4a4030" stroke="#3a3020" stroke-width="0.3"/>
+  <rect x="30" y="35" width="2.5" height="2" rx="0.3" fill="#4a4030" stroke="#3a3020" stroke-width="0.3"/>
+  <!-- Boots -->
+  <rect x="16.5" y="41" width="5.5" height="3" rx="1.5" fill="#2a2a22"/>
+  <rect x="26" y="41" width="5.5" height="3" rx="1.5" fill="#2a2a22"/>
+  <!-- Boot sole detail -->
+  <line x1="17.5" y1="43.5" x2="21" y2="43.5" stroke="#1a1a14" stroke-width="0.4"/>
+  <line x1="27" y1="43.5" x2="30.5" y2="43.5" stroke="#1a1a14" stroke-width="0.4"/>
 
-  <!-- Head (circle, top-down view) -->
-  <circle cx="24" cy="12" r="10" fill="#e8c4a0"/>
+  <!-- Torso / tactical shirt -->
+  <path d="M15 18 Q14 24 15 33 Q19 35 24 35 Q29 35 33 33 Q34 24 33 18 Z" fill="#5a6a4a"/>
 
-  <!-- Hair/helmet top -->
-  <circle cx="24" cy="10" r="8" fill="#2d4a28"/>
+  <!-- Tactical vest overlay -->
+  <path d="M16 19 Q15 24 16 32 Q19 34 24 34 Q29 34 32 32 Q33 24 32 19 Z" fill="url(#p_vest)"/>
+  <!-- Vest stitching -->
+  <line x1="24" y1="19" x2="24" y2="33" stroke="#3a4a2a" stroke-width="0.4" opacity="0.6"/>
+  <!-- MOLLE webbing on vest -->
+  <line x1="17" y1="22" x2="22" y2="22" stroke="#3a4a2a" stroke-width="0.5"/>
+  <line x1="17" y1="24" x2="22" y2="24" stroke="#3a4a2a" stroke-width="0.5"/>
+  <line x1="17" y1="26" x2="22" y2="26" stroke="#3a4a2a" stroke-width="0.5"/>
+  <line x1="26" y1="22" x2="31" y2="22" stroke="#3a4a2a" stroke-width="0.5"/>
+  <line x1="26" y1="24" x2="31" y2="24" stroke="#3a4a2a" stroke-width="0.5"/>
+  <line x1="26" y1="26" x2="31" y2="26" stroke="#3a4a2a" stroke-width="0.5"/>
+  <!-- Vest pouches / magazine pockets -->
+  <rect x="17.5" y="27" width="4" height="4" rx="0.5" fill="#4a5a3a" stroke="#3a4a2a" stroke-width="0.4"/>
+  <rect x="26.5" y="27" width="4" height="4" rx="0.5" fill="#4a5a3a" stroke="#3a4a2a" stroke-width="0.4"/>
+  <!-- Magazine tops visible -->
+  <rect x="18" y="27.2" width="1" height="1.5" rx="0.2" fill="#5a5040"/>
+  <rect x="19.5" y="27.2" width="1" height="1.5" rx="0.2" fill="#5a5040"/>
+  <rect x="27" y="27.2" width="1" height="1.5" rx="0.2" fill="#5a5040"/>
+  <rect x="28.5" y="27.2" width="1" height="1.5" rx="0.2" fill="#5a5040"/>
+  <!-- Shoulder straps -->
+  <path d="M19 19 Q20 17 21 19" fill="none" stroke="#3a4a2a" stroke-width="1.2"/>
+  <path d="M27 19 Q28 17 29 19" fill="none" stroke="#3a4a2a" stroke-width="1.2"/>
 
-  <!-- Arms holding gun forward -->
-  <rect x="6" y="22" width="8" height="4" rx="2" fill="#e8c4a0" transform="rotate(-20 10 24)"/>
-  <rect x="34" y="22" width="8" height="4" rx="2" fill="#e8c4a0" transform="rotate(20 38 24)"/>
+  <!-- Belt -->
+  <rect x="15.5" y="32" width="17" height="1.5" rx="0.3" fill="#5a4a30"/>
+  <!-- Belt buckle -->
+  <rect x="22.5" y="32" width="3" height="1.5" rx="0.2" fill="#8a7a50" stroke="#6a5a30" stroke-width="0.3"/>
 
-  <!-- Gun pointing up (forward direction) -->
-  <rect x="20" y="0" width="8" height="14" rx="2" fill="#333"/>
-  <rect x="22" y="0" width="4" height="4" fill="#222"/>
+  <!-- Left arm (holding weapon foregrip) -->
+  <path d="M15 19 Q12 17 10 14 Q9 11 10 8" fill="none" stroke="#5a6a4a" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Exposed hand/glove on foregrip -->
+  <circle cx="10.5" cy="8.5" r="1.8" fill="#3a3a2a"/>
 
-  <!-- Backpack -->
-  <rect x="18" y="32" width="12" height="10" rx="3" fill="#5a4a3a"/>
-  <line x1="20" y1="34" x2="20" y2="40" stroke="#4a3a2a" stroke-width="1"/>
-  <line x1="24" y1="34" x2="24" y2="40" stroke="#4a3a2a" stroke-width="1"/>
-  <line x1="28" y1="34" x2="28" y2="40" stroke="#4a3a2a" stroke-width="1"/>
+  <!-- Right arm (holding weapon grip/trigger) -->
+  <path d="M33 19 Q36 17 37 14 Q37.5 12 37 10" fill="none" stroke="#5a6a4a" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Right hand on grip -->
+  <circle cx="37" cy="10.5" r="1.8" fill="#3a3a2a"/>
+
+  <!-- Weapon - assault rifle viewed from top -->
+  <!-- Main body/receiver -->
+  <rect x="9" y="6" width="30" height="3.5" rx="0.5" fill="url(#p_gun_metal)"/>
+  <!-- Barrel -->
+  <rect x="7" y="6.8" width="5" height="2" rx="0.5" fill="url(#p_gun_barrel)"/>
+  <!-- Barrel extension / muzzle -->
+  <rect x="3" y="7" width="4.5" height="1.6" rx="0.4" fill="#2a2a2a"/>
+  <!-- Muzzle flash suppressor -->
+  <rect x="1" y="6.8" width="2.5" height="2" rx="0.5" fill="#333333"/>
+  <line x1="1.5" y1="6.8" x2="1.5" y2="8.8" stroke="#444444" stroke-width="0.3"/>
+  <line x1="2.3" y1="6.8" x2="2.3" y2="8.8" stroke="#444444" stroke-width="0.3"/>
+  <!-- Stock -->
+  <path d="M37 6.5 Q40 6 41 7 Q41 8.5 40 9 Q38 9.5 37 9" fill="#4a3a2a"/>
+  <path d="M40 7 Q41.5 7.5 41.5 8 Q41.5 8.5 40 9" fill="#5a4a3a"/>
+  <!-- Magazine -->
+  <rect x="20" y="9" width="4" height="3" rx="0.5" fill="#3a3a3a"/>
+  <path d="M20.5 10.5 Q22 11 23.5 10.5" fill="none" stroke="#4a4a4a" stroke-width="0.3"/>
+  <!-- Scope/red dot sight -->
+  <rect x="14" y="5" width="5" height="1.5" rx="0.5" fill="#2a2a2a" stroke="#3a3a3a" stroke-width="0.3"/>
+  <circle cx="16.5" cy="5.75" r="0.4" fill="#ff330050"/>
+  <!-- Rail on top -->
+  <line x1="10" y1="6" x2="35" y2="6" stroke="#555555" stroke-width="0.4"/>
+  <!-- Foregrip -->
+  <rect x="9.5" y="9" width="2.5" height="2" rx="0.5" fill="#2a2a2a"/>
+
+  <!-- Weapon sling -->
+  <path d="M14 8 Q18 14 20 19" fill="none" stroke="#5a4a30" stroke-width="0.8" opacity="0.5"/>
+  <path d="M34 8 Q32 14 30 19" fill="none" stroke="#5a4a30" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Head with helmet -->
+  <ellipse cx="24" cy="16" rx="5.5" ry="5.5" fill="url(#p_helmet)"/>
+  <!-- Helmet rim -->
+  <path d="M18.5 16 Q19 12 24 10.5 Q29 12 29.5 16" fill="none" stroke="#4a5a3a" stroke-width="1"/>
+  <!-- Helmet surface detail -->
+  <path d="M20 12 Q24 11 28 12" fill="none" stroke="#5a6a4a" stroke-width="0.5" opacity="0.5"/>
+  <!-- Helmet band -->
+  <path d="M19 14.5 Q24 13 29 14.5" fill="none" stroke="#5a4a30" stroke-width="0.8"/>
+  <!-- NVG mount on front -->
+  <rect x="22.5" y="11" width="3" height="1.5" rx="0.3" fill="#3a3a3a"/>
+  <circle cx="24" cy="11.75" r="0.4" fill="#2a2a2a"/>
+
+  <!-- Goggles on helmet -->
+  <path d="M20 15.5 Q24 14.5 28 15.5" fill="none" stroke="#2a2a2a" stroke-width="1.2"/>
+  <!-- Goggle lenses -->
+  <ellipse cx="22" cy="15.3" rx="1.5" ry="0.8" fill="#3a4a5a" opacity="0.6"/>
+  <ellipse cx="26" cy="15.3" rx="1.5" ry="0.8" fill="#3a4a5a" opacity="0.6"/>
+  <!-- Goggle shine -->
+  <ellipse cx="21.5" cy="15" rx="0.5" ry="0.3" fill="#5a6a7a" opacity="0.4"/>
+  <ellipse cx="25.5" cy="15" rx="0.5" ry="0.3" fill="#5a6a7a" opacity="0.4"/>
+
+  <!-- Face visible below helmet -->
+  <path d="M20 16 Q24 17 28 16 Q28.5 19 28 20 Q24 21.5 20 20 Q19.5 19 20 16 Z" fill="url(#p_skin)"/>
+  <!-- Eyes -->
+  <ellipse cx="22" cy="17.5" rx="1" ry="0.7" fill="#f0f0e0"/>
+  <circle cx="22" cy="17.5" r="0.4" fill="#3a5a3a"/>
+  <ellipse cx="26" cy="17.5" rx="1" ry="0.7" fill="#f0f0e0"/>
+  <circle cx="26" cy="17.5" r="0.4" fill="#3a5a3a"/>
+  <!-- Eyebrows -->
+  <path d="M20.8 16.8 Q22 16.3 23.2 16.8" fill="none" stroke="#5a4030" stroke-width="0.4"/>
+  <path d="M24.8 16.8 Q26 16.3 27.2 16.8" fill="none" stroke="#5a4030" stroke-width="0.4"/>
+
+  <!-- Nose -->
+  <path d="M23.5 18.5 Q24 19 24.5 18.5" fill="none" stroke="#b48454" stroke-width="0.4"/>
+
+  <!-- Mouth (neutral/focused expression) -->
+  <path d="M22.5 19.5 Q24 20 25.5 19.5" fill="none" stroke="#8a6040" stroke-width="0.5"/>
+
+  <!-- Jaw / chin shadow -->
+  <path d="M21 20 Q24 21 27 20" fill="none" stroke="#a07050" stroke-width="0.4" opacity="0.5"/>
+
+  <!-- Neck area -->
+  <path d="M21 20.5 Q24 21 27 20.5" fill="none" stroke="#4a5a3a" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Backpack visible behind body -->
+  <rect x="19" y="22" width="10" height="8" rx="1.5" fill="#5a5a4a" opacity="0.4"/>
+  <line x1="21" y1="23" x2="21" y2="29" stroke="#4a4a3a" stroke-width="0.4" opacity="0.4"/>
+  <line x1="27" y1="23" x2="27" y2="29" stroke="#4a4a3a" stroke-width="0.4" opacity="0.4"/>
+
+  <!-- Radio on vest -->
+  <rect x="32" y="22" width="1.5" height="3" rx="0.3" fill="#2a2a2a"/>
+  <line x1="32.75" y1="22" x2="33.5" y2="20" stroke="#2a2a2a" stroke-width="0.3"/>
+
+  <!-- Holster on right leg -->
+  <rect x="30" y="33.5" width="2.5" height="4" rx="0.5" fill="#3a3020"/>
+  <rect x="30.2" y="33.7" width="2" height="2" rx="0.3" fill="#2a2a2a"/>
 </svg>

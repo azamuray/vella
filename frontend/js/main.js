@@ -5,6 +5,8 @@
 
 import { WebSocketManager } from './network/WebSocketManager.js';
 import { GameManager } from './game.js';
+import { WorldGameManager } from './world.js';
+import { BaseManager } from './base.js';
 import { UIManager } from './ui/UIManager.js';
 
 // Telegram WebApp
@@ -16,7 +18,10 @@ window.VELLA = {
     player: null,
     ws: null,
     game: null,
-    ui: null
+    worldGame: null,
+    baseManager: null,
+    ui: null,
+    mode: null, // 'room' or 'world'
 };
 
 // Global audio player (works without Phaser game)
@@ -39,21 +44,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('VELLA initializing...');
 
     // Setup Telegram WebApp
-    if (tg) {
+    if (tg && tg.initData) {
         tg.ready();
         tg.expand();
         tg.setHeaderColor('#0a0a0f');
         tg.setBackgroundColor('#0a0a0f');
 
-        window.VELLA.initData = tg.initData || '';
+        window.VELLA.initData = tg.initData;
         console.log('Telegram WebApp ready');
     } else {
         // Dev mode - create fake init data
+        if (tg) {
+            try { tg.ready(); tg.expand(); } catch(e) {}
+        }
         const devUser = {
-            id: Math.floor(Math.random() * 1000000),
-            username: 'dev_player'
+            id: 999999,
+            username: 'dev_player',
+            first_name: 'Dev'
         };
-        window.VELLA.initData = `user=${encodeURIComponent(JSON.stringify(devUser))}`;
+        window.VELLA.initData = `user=${JSON.stringify(devUser)}`;
         console.log('Dev mode - using fake init data');
     }
 
@@ -128,6 +137,79 @@ function setupEventListeners() {
     // Rooms cancel
     document.getElementById('btn-rooms-cancel').addEventListener('click', () => {
         hideModal('rooms-modal');
+    });
+
+    // Open World button
+    document.getElementById('btn-open-world').addEventListener('click', () => {
+        enterWorld();
+    });
+
+    // Clan button
+    document.getElementById('btn-clan').addEventListener('click', () => {
+        showClanScreen();
+    });
+
+    // Clan back
+    document.getElementById('btn-clan-back').addEventListener('click', () => {
+        hideScreen('clan-screen');
+        showScreen('menu-screen');
+    });
+
+    // Clan create
+    document.getElementById('btn-clan-create').addEventListener('click', () => {
+        createClan();
+    });
+
+    // Clan join
+    document.getElementById('btn-clan-join').addEventListener('click', () => {
+        joinClan();
+    });
+
+    // Clan leave
+    document.getElementById('btn-clan-leave').addEventListener('click', () => {
+        leaveClan();
+    });
+
+    // Clan base
+    document.getElementById('btn-clan-base').addEventListener('click', () => {
+        showBaseScreen();
+    });
+
+    // Clan deposit
+    document.getElementById('btn-clan-deposit').addEventListener('click', () => {
+        depositResources();
+    });
+
+    // Base back
+    document.getElementById('btn-base-back').addEventListener('click', () => {
+        hideScreen('base-screen');
+        showScreen('clan-screen');
+    });
+
+    // World buttons
+    document.getElementById('btn-use-medkit').addEventListener('click', () => {
+        if (window.VELLA.ws) {
+            window.VELLA.ws.send({ type: 'use_medkit' });
+        }
+    });
+
+    document.getElementById('btn-collect-resource').addEventListener('click', () => {
+        if (window.VELLA.ws) {
+            window.VELLA.ws.send({ type: 'collect_resource' });
+        }
+    });
+
+    document.getElementById('btn-world-pause').addEventListener('click', () => {
+        showModal('world-exit-modal');
+    });
+
+    document.getElementById('btn-world-exit-confirm').addEventListener('click', () => {
+        hideModal('world-exit-modal');
+        leaveWorld();
+    });
+
+    document.getElementById('btn-world-exit-cancel').addEventListener('click', () => {
+        hideModal('world-exit-modal');
     });
 
     // Shop button
@@ -805,6 +887,250 @@ async function equipWeapon(code) {
     } catch (error) {
         console.error('Failed to equip weapon:', error);
     }
+}
+
+// ============== OPEN WORLD ==============
+
+async function enterWorld() {
+    hideScreen('menu-screen');
+
+    // Connect WebSocket
+    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws?init_data=${encodeURIComponent(window.VELLA.initData)}`;
+    window.VELLA.ws = new WebSocketManager(wsUrl);
+
+    window.VELLA.ws.on('open', () => {
+        window.VELLA.ws.send({ type: 'enter_world' });
+    });
+
+    setupWorldHandlers();
+    window.VELLA.ws.connect();
+}
+
+function setupWorldHandlers() {
+    window.VELLA.ws.on('world_entered', (data) => {
+        console.log('[World] Entered at', data.x, data.y);
+        window.VELLA.mode = 'world';
+
+        // Create world game manager
+        window.VELLA.worldGame = new WorldGameManager();
+
+        // Show game elements
+        document.getElementById('game-container').classList.remove('hidden');
+        document.getElementById('world-hud').classList.remove('hidden');
+        document.getElementById('joystick-left').classList.remove('hidden');
+        document.getElementById('joystick-right').classList.remove('hidden');
+
+        window.VELLA.worldGame.start();
+    });
+
+    window.VELLA.ws.on('world_chunk_load', (data) => {
+        if (window.VELLA.worldGame) {
+            window.VELLA.worldGame.loadChunk(data);
+        }
+    });
+
+    window.VELLA.ws.on('world_chunk_unload', (data) => {
+        if (window.VELLA.worldGame) {
+            window.VELLA.worldGame.unloadChunk(data.chunk_x, data.chunk_y);
+        }
+    });
+
+    window.VELLA.ws.on('world_state', (data) => {
+        if (window.VELLA.worldGame) {
+            window.VELLA.worldGame.updateState(data);
+        }
+    });
+
+    window.VELLA.ws.on('world_resource_collected', (data) => {
+        console.log('[World] Collected', data.amount, data.resource_type);
+        window.playSound('weapon_switch', 0.3);
+    });
+
+    window.VELLA.ws.on('world_medkit_used', (data) => {
+        console.log('[World] Medkit used, HP:', data.hp);
+        window.playSound('wave_complete', 0.3);
+    });
+
+    window.VELLA.ws.on('world_player_respawn', (data) => {
+        console.log('[World] Respawned at', data.x, data.y);
+    });
+
+    window.VELLA.ws.on('world_left', () => {
+        console.log('[World] Left world');
+    });
+
+    window.VELLA.ws.on('close', () => {
+        console.log('WebSocket closed');
+    });
+
+    window.VELLA.ws.on('error', (data) => {
+        console.error('WebSocket error:', data);
+    });
+}
+
+function leaveWorld() {
+    if (window.VELLA.ws) {
+        window.VELLA.ws.send({ type: 'leave_world' });
+        window.VELLA.ws.disconnect();
+        window.VELLA.ws = null;
+    }
+
+    if (window.VELLA.worldGame) {
+        window.VELLA.worldGame.destroy();
+        window.VELLA.worldGame = null;
+    }
+
+    window.VELLA.mode = null;
+
+    document.getElementById('game-container').classList.add('hidden');
+    document.getElementById('world-hud').classList.add('hidden');
+    document.getElementById('joystick-left').classList.add('hidden');
+    document.getElementById('joystick-right').classList.add('hidden');
+
+    showScreen('menu-screen');
+    loadPlayerData();
+}
+
+// ============== CLAN ==============
+
+async function showClanScreen() {
+    hideScreen('menu-screen');
+    showScreen('clan-screen');
+    await loadClanData();
+}
+
+async function loadClanData() {
+    try {
+        const res = await fetch(`/api/clan?init_data=${encodeURIComponent(window.VELLA.initData)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (!data.clan) {
+            document.getElementById('clan-no-clan').classList.remove('hidden');
+            document.getElementById('clan-info').classList.add('hidden');
+            return;
+        }
+
+        document.getElementById('clan-no-clan').classList.add('hidden');
+        document.getElementById('clan-info').classList.remove('hidden');
+
+        const clan = data.clan;
+        document.getElementById('clan-name-display').textContent = clan.name;
+        document.getElementById('clan-metal').textContent = clan.resources.metal;
+        document.getElementById('clan-wood').textContent = clan.resources.wood;
+        document.getElementById('clan-food').textContent = clan.resources.food;
+        document.getElementById('clan-ammo').textContent = clan.resources.ammo;
+        document.getElementById('clan-meds').textContent = clan.resources.meds;
+
+        // Members
+        const listEl = document.getElementById('clan-members-list');
+        listEl.innerHTML = '';
+        for (const m of clan.members) {
+            const row = document.createElement('div');
+            row.className = 'clan-member-row';
+            const roleIcon = m.role === 'leader' ? '👑' : m.role === 'officer' ? '⭐' : '';
+            row.innerHTML = `
+                <span class="member-name">${roleIcon} ${m.username || 'Player'}</span>
+                <span class="member-role">${m.role}</span>
+            `;
+            listEl.appendChild(row);
+        }
+    } catch (e) {
+        console.error('Failed to load clan:', e);
+    }
+}
+
+async function createClan() {
+    const name = document.getElementById('clan-name-input').value.trim();
+    const chatId = document.getElementById('clan-chat-id-input').value.trim();
+    if (!name || !chatId) return alert('Fill in all fields');
+
+    try {
+        const res = await fetch(
+            `/api/clan/create?name=${encodeURIComponent(name)}&telegram_chat_id=${chatId}&init_data=${encodeURIComponent(window.VELLA.initData)}`,
+            { method: 'POST' }
+        );
+        if (res.ok) {
+            await loadClanData();
+        } else {
+            const err = await res.json();
+            alert(err.detail || 'Error');
+        }
+    } catch (e) {
+        console.error('Failed to create clan:', e);
+    }
+}
+
+async function joinClan() {
+    const clanId = document.getElementById('clan-join-id-input').value.trim();
+    if (!clanId) return alert('Enter clan ID');
+
+    try {
+        const res = await fetch(
+            `/api/clan/join?clan_id=${clanId}&init_data=${encodeURIComponent(window.VELLA.initData)}`,
+            { method: 'POST' }
+        );
+        if (res.ok) {
+            await loadClanData();
+        } else {
+            const err = await res.json();
+            alert(err.detail || 'Error');
+        }
+    } catch (e) {
+        console.error('Failed to join clan:', e);
+    }
+}
+
+async function leaveClan() {
+    if (!confirm('Leave clan?')) return;
+
+    try {
+        const res = await fetch(
+            `/api/clan/leave?init_data=${encodeURIComponent(window.VELLA.initData)}`,
+            { method: 'DELETE' }
+        );
+        if (res.ok) {
+            await loadClanData();
+        }
+    } catch (e) {
+        console.error('Failed to leave clan:', e);
+    }
+}
+
+async function depositResources() {
+    // Simple deposit: deposit all resources
+    const amounts = prompt('Deposit all resources? (metal,wood,food,ammo,meds)', '10,10,5,5,1');
+    if (!amounts) return;
+    const [metal, wood, food, ammo, meds] = amounts.split(',').map(Number);
+
+    try {
+        const res = await fetch(
+            `/api/clan/deposit?metal=${metal || 0}&wood=${wood || 0}&food=${food || 0}&ammo=${ammo || 0}&meds=${meds || 0}&init_data=${encodeURIComponent(window.VELLA.initData)}`,
+            { method: 'POST' }
+        );
+        if (res.ok) {
+            await loadClanData();
+        } else {
+            const err = await res.json();
+            alert(err.detail || 'Error');
+        }
+    } catch (e) {
+        console.error('Failed to deposit:', e);
+    }
+}
+
+// ============== BASE ==============
+
+async function showBaseScreen() {
+    hideScreen('clan-screen');
+    showScreen('base-screen');
+
+    if (!window.VELLA.baseManager) {
+        window.VELLA.baseManager = new BaseManager('base-canvas');
+    }
+
+    await window.VELLA.baseManager.loadBuildingTypes();
+    await window.VELLA.baseManager.loadBuildings();
 }
 
 // Helper functions

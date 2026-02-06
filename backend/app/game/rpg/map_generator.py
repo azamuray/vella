@@ -148,7 +148,7 @@ class MapGenerator:
 
         # Генерация точек спавна зомби
         spawn_points = []
-        num_spawns = random.randint(2, 5)
+        num_spawns = random.randint(1, 3)
 
         # Дальше от центра = больше зомби
         distance_from_center = math.sqrt(chunk_x ** 2 + chunk_y ** 2)
@@ -177,8 +177,8 @@ class MapGenerator:
                 "x": world_x,
                 "y": world_y,
                 "zombie_types": zombie_types,
-                "max_zombies": int(5 * danger_multiplier),
-                "spawn_rate": 0.5 * danger_multiplier  # per minute
+                "max_zombies": int(3 * danger_multiplier),
+                "spawn_rate": 0.3 * danger_multiplier  # per minute
             })
 
         return {

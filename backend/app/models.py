@@ -193,7 +193,7 @@ class MapChunk(Base):
     spawn_points = Column(JSON, nullable=True)
 
     # Generation seed (for reproducibility)
-    seed = Column(Integer, nullable=False)
+    seed = Column(BigInteger, nullable=False)
 
     generated_at = Column(DateTime, server_default=func.now())
 

@@ -1,32 +1,149 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">
-  <!-- Top-down zombie - tank/heavy -->
+  <defs>
+    <radialGradient id="zt_skin" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#4a6a3a"/>
+      <stop offset="60%" stop-color="#3a5a2a"/>
+      <stop offset="100%" stop-color="#2a4a1a"/>
+    </radialGradient>
+    <radialGradient id="zt_head" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#5a7a4a"/>
+      <stop offset="60%" stop-color="#4a6a3a"/>
+      <stop offset="100%" stop-color="#3a5a2a"/>
+    </radialGradient>
+    <linearGradient id="zt_metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#808080"/>
+      <stop offset="50%" stop-color="#606060"/>
+      <stop offset="100%" stop-color="#404040"/>
+    </linearGradient>
+    <linearGradient id="zt_chain" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#707070"/>
+      <stop offset="50%" stop-color="#909090"/>
+      <stop offset="100%" stop-color="#606060"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Massive body -->
-  <ellipse cx="28" cy="34" rx="18" ry="18" fill="#4a5a3a"/>
+  <!-- Large shadow -->
+  <ellipse cx="28" cy="30" rx="16" ry="18" fill="#00000030"/>
 
-  <!-- Huge shoulders -->
-  <ellipse cx="28" cy="24" rx="24" ry="12" fill="#3a4a2a"/>
+  <!-- Legs - thick, sturdy -->
+  <rect x="18" y="38" width="7" height="10" rx="3" fill="#2a3a28" transform="rotate(-5 21 42)"/>
+  <rect x="31" y="38" width="7" height="10" rx="3" fill="#2a3a28" transform="rotate(5 35 42)"/>
+  <!-- Torn pant fabric -->
+  <path d="M18 46 l-0.5 1.5 l1.5 0.3 l-0.5 1.2 l1.8 -0.2 l-0.3 1" fill="none" stroke="#1a2a18" stroke-width="0.5"/>
+  <path d="M38 46 l0.5 1.5 l-1.5 0.3 l0.5 1.2 l-1.8 -0.2 l0.3 1" fill="none" stroke="#1a2a18" stroke-width="0.5"/>
+  <!-- Exposed flesh on legs -->
+  <ellipse cx="20" cy="44" rx="1.5" ry="2" fill="#3a5a2a"/>
+  <ellipse cx="37" cy="43" rx="1.2" ry="1.8" fill="#3a5a2a"/>
+  <!-- Feet -->
+  <ellipse cx="21" cy="48.5" rx="3" ry="1.5" fill="#3a4a30"/>
+  <ellipse cx="35" cy="48.5" rx="3" ry="1.5" fill="#3a4a30"/>
 
-  <!-- Small head (compared to body) -->
-  <circle cx="28" cy="12" r="10" fill="#5a6a4a"/>
+  <!-- Massive torso -->
+  <path d="M14 18 Q11 25 12 38 Q18 42 28 42 Q38 42 44 38 Q45 25 42 18 Z" fill="url(#zt_skin)"/>
+  <!-- Thick neck area merge with shoulders -->
+  <path d="M18 18 Q28 15 38 18 Q40 20 38 22 Q28 19 18 22 Q16 20 18 18 Z" fill="#3a5a2a" opacity="0.5"/>
 
-  <!-- Top of head -->
-  <circle cx="28" cy="10" r="7" fill="#4a5a3a"/>
+  <!-- Embedded metal plate on chest -->
+  <path d="M22 24 L26 22 L32 22 L34 24 L33 30 L23 30 Z" fill="url(#zt_metal)" opacity="0.8"/>
+  <path d="M22 24 L26 22 L32 22 L34 24" fill="none" stroke="#909090" stroke-width="0.5"/>
+  <path d="M23 30 L33 30" fill="none" stroke="#505050" stroke-width="0.5"/>
+  <!-- Bolts in metal plate -->
+  <circle cx="24" cy="25" r="0.8" fill="#707070" stroke="#505050" stroke-width="0.3"/>
+  <circle cx="32" cy="25" r="0.8" fill="#707070" stroke="#505050" stroke-width="0.3"/>
+  <circle cx="24" cy="29" r="0.8" fill="#707070" stroke="#505050" stroke-width="0.3"/>
+  <circle cx="32" cy="29" r="0.8" fill="#707070" stroke="#505050" stroke-width="0.3"/>
+  <!-- Flesh growing around metal -->
+  <path d="M22 24 Q21 25 22 26" fill="none" stroke="#4a3a3a" stroke-width="0.6"/>
+  <path d="M34 24 Q35 25 34 26" fill="none" stroke="#4a3a3a" stroke-width="0.6"/>
 
-  <!-- Massive arms -->
-  <ellipse cx="6" cy="26" rx="8" ry="6" fill="#4a5a3a" transform="rotate(-20 6 26)"/>
-  <ellipse cx="50" cy="26" rx="8" ry="6" fill="#4a5a3a" transform="rotate(20 50 26)"/>
+  <!-- Chain wrapped around torso -->
+  <path d="M16 28 Q22 26 28 28 Q34 30 40 28" fill="none" stroke="url(#zt_chain)" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Chain links detail -->
+  <ellipse cx="19" cy="27.2" rx="1" ry="0.6" fill="none" stroke="#888" stroke-width="0.4"/>
+  <ellipse cx="22" cy="27" rx="1" ry="0.6" fill="none" stroke="#888" stroke-width="0.4"/>
+  <ellipse cx="25" cy="27.5" rx="1" ry="0.6" fill="none" stroke="#888" stroke-width="0.4"/>
+  <ellipse cx="31" cy="28.8" rx="1" ry="0.6" fill="none" stroke="#888" stroke-width="0.4"/>
+  <ellipse cx="34" cy="28.5" rx="1" ry="0.6" fill="none" stroke="#888" stroke-width="0.4"/>
+  <ellipse cx="37" cy="28" rx="1" ry="0.6" fill="none" stroke="#888" stroke-width="0.4"/>
+  <!-- Hanging chain end -->
+  <path d="M40 28 Q42 30 41 33 Q40 35 41 37" fill="none" stroke="#707070" stroke-width="1.2" stroke-linecap="round"/>
 
-  <!-- Huge fists -->
-  <circle cx="2" cy="18" r="6" fill="#5a6a4a"/>
-  <circle cx="54" cy="18" r="6" fill="#5a6a4a"/>
+  <!-- Blood stains on torso -->
+  <ellipse cx="18" cy="32" rx="2" ry="1.5" fill="#8b0000" opacity="0.4"/>
+  <ellipse cx="36" cy="35" rx="1.5" ry="2" fill="#8b0000" opacity="0.35"/>
+  <ellipse cx="28" cy="38" rx="2.5" ry="1" fill="#6b0000" opacity="0.3"/>
 
-  <!-- Armor/chains on back -->
-  <rect x="18" y="38" width="20" height="6" rx="2" fill="#666"/>
-  <circle cx="22" cy="41" r="2" fill="#888"/>
-  <circle cx="28" cy="41" r="2" fill="#888"/>
-  <circle cx="34" cy="41" r="2" fill="#888"/>
+  <!-- Large open wound on side -->
+  <path d="M13 30 Q14 28 15 30 Q14.5 32 13.5 31 Z" fill="#5a1010"/>
+  <ellipse cx="14" cy="30" rx="1.2" ry="1.8" fill="#8b0000" opacity="0.7"/>
 
-  <!-- Scars -->
-  <line x1="22" y1="8" x2="32" y2="14" stroke="#3a2a2a" stroke-width="2"/>
+  <!-- Left arm - massive -->
+  <path d="M14 20 Q8 18 5 14 Q3 10 5 7" fill="none" stroke="#3a5a2a" stroke-width="6" stroke-linecap="round"/>
+  <!-- Arm muscle bulge -->
+  <ellipse cx="8" cy="16" rx="2.5" ry="3.5" fill="#3a5a2a" opacity="0.5" transform="rotate(-30 8 16)"/>
+  <!-- Metal spike embedded in left arm -->
+  <line x1="7" y1="14" x2="4" y2="12" stroke="#808080" stroke-width="1" stroke-linecap="round"/>
+  <polygon points="3.5,11.5 4.5,11 4,12.5" fill="#909090"/>
+  <!-- Left fist -->
+  <circle cx="5" cy="7.5" r="3" fill="#4a6a3a"/>
+  <path d="M3 6 Q2 4 3 3.5" fill="none" stroke="#3a5a2a" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M5 5 Q4.5 3 5.5 2.5" fill="none" stroke="#3a5a2a" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M7 5.5 Q7 3.5 7.5 3" fill="none" stroke="#3a5a2a" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Bloody knuckles -->
+  <circle cx="3" cy="3.8" r="0.5" fill="#8b0000" opacity="0.6"/>
+  <circle cx="5.2" cy="2.8" r="0.5" fill="#8b0000" opacity="0.6"/>
+  <circle cx="7.3" cy="3.3" r="0.5" fill="#8b0000" opacity="0.6"/>
+
+  <!-- Right arm - massive -->
+  <path d="M42 20 Q48 18 51 14 Q53 10 51 7" fill="none" stroke="#3a5a2a" stroke-width="6" stroke-linecap="round"/>
+  <!-- Arm muscle bulge -->
+  <ellipse cx="48" cy="16" rx="2.5" ry="3.5" fill="#3a5a2a" opacity="0.5" transform="rotate(30 48 16)"/>
+  <!-- Chain wrapped around right arm -->
+  <path d="M44 19 Q46 17 48 18" fill="none" stroke="#707070" stroke-width="1.2"/>
+  <path d="M46 16 Q48 15 49 16.5" fill="none" stroke="#707070" stroke-width="1.2"/>
+  <!-- Right fist -->
+  <circle cx="51" cy="7.5" r="3" fill="#4a6a3a"/>
+  <path d="M49 6 Q48 4 49 3.5" fill="none" stroke="#3a5a2a" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M51 5 Q50.5 3 51.5 2.5" fill="none" stroke="#3a5a2a" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M53 5.5 Q53.5 3.5 54 3" fill="none" stroke="#3a5a2a" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="48.5" cy="4.3" r="0.5" fill="#8b0000" opacity="0.6"/>
+  <circle cx="51.2" cy="2.8" r="0.5" fill="#8b0000" opacity="0.6"/>
+  <circle cx="53.5" cy="3.3" r="0.5" fill="#8b0000" opacity="0.6"/>
+
+  <!-- Head - small relative to body (intimidating) -->
+  <ellipse cx="28" cy="13" rx="6" ry="6.5" fill="url(#zt_head)"/>
+  <!-- Heavy brow ridge -->
+  <path d="M22.5 11 Q25 9.5 28 9.2 Q31 9.5 33.5 11" fill="#3a5a2a" opacity="0.6"/>
+  <path d="M23 11.5 Q25.5 10.5 28 10.2 Q30.5 10.5 33 11.5" fill="none" stroke="#2a4a1a" stroke-width="0.8"/>
+
+  <!-- Short cropped / missing hair -->
+  <path d="M23 9 Q25 7 28 6.5 Q31 7 33 9" fill="#1a1a10" opacity="0.5"/>
+  <!-- Scars on scalp -->
+  <path d="M25 8 L27 7.5 L26 9" fill="none" stroke="#8b0000" stroke-width="0.5" opacity="0.5"/>
+  <path d="M30 7.5 L31.5 8.5" fill="none" stroke="#6a4a4a" stroke-width="0.5"/>
+
+  <!-- Eyes - small, angry -->
+  <ellipse cx="25.5" cy="12" rx="1.5" ry="1" fill="#c0c0a0"/>
+  <circle cx="25.5" cy="12" r="0.6" fill="#331100"/>
+  <ellipse cx="30.5" cy="12" rx="1.5" ry="1" fill="#c0c0a0"/>
+  <circle cx="30.5" cy="12" r="0.6" fill="#331100"/>
+  <!-- Angry brow shadow -->
+  <path d="M24 11 L27 11.5" fill="none" stroke="#2a4a1a" stroke-width="0.7"/>
+  <path d="M32 11 L29 11.5" fill="none" stroke="#2a4a1a" stroke-width="0.7"/>
+
+  <!-- Nose - broad, broken -->
+  <path d="M27 13.5 Q28 14.5 29 13.5" fill="#3a5a2a"/>
+  <circle cx="27.2" cy="14" r="0.4" fill="#2a4a1a"/>
+  <circle cx="28.8" cy="14" r="0.4" fill="#2a4a1a"/>
+
+  <!-- Mouth - clenched jaw -->
+  <path d="M25.5 16 Q28 17 30.5 16" fill="#2a1010"/>
+  <path d="M26 16 L26.3 16.6 L27 16.1 L27.5 16.7 L28 16.1 L28.5 16.7 L29 16.1 L29.7 16.6 L30 16" fill="none" stroke="#b0a080" stroke-width="0.4"/>
+
+  <!-- Neck scars -->
+  <path d="M24 18 Q26 17.5 28 18 Q30 17.5 32 18" fill="none" stroke="#6b0000" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Protruding bone on shoulder -->
+  <ellipse cx="15" cy="19" rx="2" ry="1" fill="#c0b8a0" opacity="0.7" transform="rotate(-20 15 19)"/>
+  <ellipse cx="41" cy="19" rx="2" ry="1" fill="#c0b8a0" opacity="0.7" transform="rotate(20 41 19)"/>
 </svg>

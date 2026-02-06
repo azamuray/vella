@@ -918,3 +918,226 @@ html, body {
     opacity: 0.7;
     cursor: not-allowed;
 }
+
+/* Accent button (Open World) */
+.btn-accent {
+    background: linear-gradient(135deg, #0f3460, #16213e);
+    color: var(--text);
+    border: 2px solid var(--accent);
+}
+
+/* ============== WORLD HUD ============== */
+#world-hud {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 70;
+    padding: env(safe-area-inset-top, 10px) 10px env(safe-area-inset-bottom, 10px);
+}
+
+.world-hud-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.5rem;
+}
+
+.world-resources-bar {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.world-resources-bar span {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.world-hud-bottom {
+    position: absolute;
+    bottom: 210px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 12px;
+    border-radius: 12px;
+    pointer-events: auto;
+}
+
+.world-ammo-text {
+    font-size: 0.85rem;
+    color: var(--warning);
+    min-width: 50px;
+    text-align: center;
+}
+
+.btn-small {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-medkit {
+    background: var(--success);
+    color: #000;
+}
+
+.btn-collect {
+    background: var(--warning);
+    color: #000;
+}
+
+#world-hud .health-bar {
+    width: 120px;
+}
+
+/* ============== CLAN SCREEN ============== */
+.clan-container {
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.clan-empty-text {
+    text-align: center;
+    color: var(--text-dim);
+    margin: 2rem 0 1.5rem;
+    font-size: 1.1rem;
+}
+
+.clan-create-form,
+.clan-join-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+}
+
+.clan-create-form input,
+.clan-join-form input {
+    padding: 0.75rem 1rem;
+    background: var(--secondary);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.clan-resources {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 0.75rem;
+    background: var(--bg-card);
+    border-radius: 10px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.clan-members {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.clan-member-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--secondary);
+}
+
+.clan-member-row:last-child {
+    border-bottom: none;
+}
+
+.member-name {
+    font-weight: 500;
+}
+
+.member-role {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    text-transform: capitalize;
+}
+
+.clan-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ============== BASE SCREEN ============== */
+.base-container {
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#base-canvas {
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    max-width: 100%;
+    touch-action: none;
+}
+
+.build-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 640px;
+}
+
+.build-btn {
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.8rem;
+    min-width: 80px;
+}
+
+.build-btn.selected {
+    border-color: var(--warning);
+    background: rgba(251, 191, 36, 0.15);
+}
+
+.build-btn .build-name {
+    display: block;
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+}
+
+.build-btn .build-cost {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+}

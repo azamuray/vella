@@ -19,6 +19,10 @@ from .models import Player, Weapon, PlayerWeapon
 from .auth import validate_telegram_data
 from .game.engine import engine
 from .game.weapons import WEAPONS, get_all_weapons
+from .game.rpg.world_engine import world_engine
+from .game.rpg.building_types import seed_building_types
+from .game.rpg.clan_routes import router as clan_router
+from .game.rpg.building_routes import router as building_router
 
 # Telegram Bot Token for payments
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
@@ -38,17 +42,24 @@ async def lifespan(app: FastAPI):
     await init_db()
     redis_client = await redis.from_url(REDIS_URL)
     await seed_weapons()
+    await _seed_building_types()
     await engine.start()
+    await world_engine.start()
 
     yield
 
     # Shutdown
+    await world_engine.stop()
     await engine.stop()
     if redis_client:
         await redis_client.close()
 
 
 app = FastAPI(title="VELLA", lifespan=lifespan)
+
+# Include RPG routers
+app.include_router(clan_router)
+app.include_router(building_router)
 
 # CORS
 app.add_middleware(
@@ -90,6 +101,13 @@ async def seed_weapons():
             print(f"[Seed] Added weapon: {code}")
 
         await db.commit()
+
+
+async def _seed_building_types():
+    """Seed building types table"""
+    from .database import async_session
+    async with async_session() as db:
+        await seed_building_types(db)
 
 
 # ============== AUTH HELPERS ==============
@@ -449,21 +467,119 @@ async def websocket_endpoint(
         return
 
     await websocket.accept()
+    print(f"[WS] Accepted connection for {username} (id={telegram_id})")
 
     # Get or create player in DB
-    from .database import async_session
-    async with async_session() as db:
-        await get_or_create_player(telegram_id, username, db)
+    try:
+        from .database import async_session
+        async with async_session() as db:
+            await get_or_create_player(telegram_id, username, db)
+        print(f"[WS] Player {username} ready, waiting for messages...")
+    except Exception as e:
+        import traceback
+        print(f"[WS] ERROR creating player: {e}")
+        traceback.print_exc()
+        await websocket.close(code=4002, reason="DB error")
+        return
 
     room = None
     player = None
+    player_mode = None  # "room" or "world"
+    world_player = None
 
     try:
         while True:
             data = await websocket.receive_json()
             msg_type = data.get("type")
+            print(f"[WS] {username}: {msg_type}")
 
-            if msg_type == "create_room":
+            # ====== WORLD MODE MESSAGES ======
+            if msg_type == "enter_world":
+                try:
+                    # Enter open world
+                    if player_mode == "room" and room:
+                        # Leave room first
+                        room.remove_player(telegram_id)
+                        if room.is_empty:
+                            engine.room_manager.remove_room(room.room_code)
+                        room = None
+                        player = None
+
+                    # Set equipped weapon from DB
+                    weapon_code = "glock_17"
+                    async with async_session() as db:
+                        result = await db.execute(
+                            select(PlayerWeapon, Weapon)
+                            .join(Weapon)
+                            .where(PlayerWeapon.player_id == telegram_id)
+                            .where(PlayerWeapon.equipped == True)
+                        )
+                        row = result.first()
+                        if row:
+                            weapon_code = row[1].code
+
+                    world_player = await world_engine.add_player(
+                        telegram_id, username, websocket, weapon_code
+                    )
+                    player_mode = "world"
+
+                    await websocket.send_json({
+                        "type": "world_entered",
+                        "x": world_player.x,
+                        "y": world_player.y,
+                        "hp": world_player.hp,
+                        "max_hp": world_player.max_hp,
+                        "inventory": world_player.to_inventory_state(),
+                        "weapon": world_player.weapon_code,
+                    })
+                    print(f"[World] Player {username} entered world at ({world_player.x:.0f}, {world_player.y:.0f})")
+                except Exception as e:
+                    import traceback
+                    print(f"[World] ERROR entering world: {e}")
+                    traceback.print_exc()
+
+            elif msg_type == "world_input" and player_mode == "world" and world_player:
+                world_player.apply_input(
+                    move_x=data.get("move_x", 0),
+                    move_y=data.get("move_y", 0),
+                    aim_x=data.get("aim_x", 0),
+                    aim_y=data.get("aim_y", -1),
+                    shooting=data.get("shooting", False),
+                    reload=data.get("reload", False)
+                )
+
+            elif msg_type == "collect_resource" and player_mode == "world" and world_player:
+                result = world_engine.collect_resource_for_player(telegram_id)
+                if result:
+                    await websocket.send_json({
+                        "type": "world_resource_collected",
+                        **result,
+                        "inventory": world_player.to_inventory_state(),
+                    })
+
+            elif msg_type == "use_medkit" and player_mode == "world" and world_player:
+                if world_player.use_medkit():
+                    await websocket.send_json({
+                        "type": "world_medkit_used",
+                        "hp": world_player.hp,
+                        "meds": world_player.meds,
+                    })
+
+            elif msg_type == "leave_world" and player_mode == "world":
+                await world_engine.remove_player(telegram_id)
+                world_player = None
+                player_mode = None
+                await websocket.send_json({"type": "world_left"})
+
+            # ====== ROOM MODE MESSAGES ======
+            elif msg_type == "create_room":
+                # Leave world if in it
+                if player_mode == "world" and world_player:
+                    await world_engine.remove_player(telegram_id)
+                    world_player = None
+
+                player_mode = "room"
+
                 # Create a new room (public or private)
                 is_public = data.get("is_public", True)
                 room = engine.room_manager.create_room(is_public=is_public)
@@ -491,6 +607,13 @@ async def websocket_endpoint(
                 print(f"[Room] Created {'public' if is_public else 'private'} room {room.room_code} by {username}")
 
             elif msg_type == "join_room":
+                # Leave world if in it
+                if player_mode == "world" and world_player:
+                    await world_engine.remove_player(telegram_id)
+                    world_player = None
+
+                player_mode = "room"
+
                 room_code = data.get("room_code")
                 room = engine.room_manager.get_room(room_code)
 
@@ -628,12 +751,17 @@ async def websocket_endpoint(
 
                 room = None
                 player = None
+                player_mode = None
 
     except WebSocketDisconnect:
         pass
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
+        # Cleanup world player on disconnect
+        if player_mode == "world" and world_player:
+            await world_engine.remove_player(telegram_id)
+
         # Cleanup on disconnect
         if room and player:
             room.remove_player(telegram_id)

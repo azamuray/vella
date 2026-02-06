@@ -56,6 +56,12 @@
                 <button class="btn btn-secondary" id="btn-browse-rooms">
                     <span class="icon">🌐</span> Найти игру
                 </button>
+                <button class="btn btn-accent" id="btn-open-world">
+                    <span class="icon">🗺️</span> Открытый мир
+                </button>
+                <button class="btn btn-secondary" id="btn-clan">
+                    <span class="icon">⚔️</span> Клан
+                </button>
                 <button class="btn btn-secondary" id="btn-shop">
                     <span class="icon">🔫</span> Магазин
                 </button>
@@ -140,6 +146,66 @@
         </div>
     </div>
 
+    <!-- Clan screen -->
+    <div id="clan-screen" class="screen hidden">
+        <div class="clan-container">
+            <div class="shop-header">
+                <button class="btn-back" id="btn-clan-back">← Назад</button>
+                <h2>Клан</h2>
+                <div></div>
+            </div>
+
+            <!-- No clan state -->
+            <div id="clan-no-clan">
+                <p class="clan-empty-text">Ты не в клане</p>
+                <div class="clan-create-form">
+                    <input type="text" id="clan-name-input" placeholder="Название клана" maxlength="128">
+                    <input type="number" id="clan-chat-id-input" placeholder="Telegram Chat ID">
+                    <button class="btn btn-primary" id="btn-clan-create">Создать клан</button>
+                </div>
+                <div class="clan-join-form">
+                    <input type="number" id="clan-join-id-input" placeholder="ID клана">
+                    <button class="btn btn-secondary" id="btn-clan-join">Вступить</button>
+                </div>
+            </div>
+
+            <!-- In clan state -->
+            <div id="clan-info" class="hidden">
+                <h3 id="clan-name-display">—</h3>
+                <div class="clan-resources">
+                    <span>⛏️ <span id="clan-metal">0</span></span>
+                    <span>🪵 <span id="clan-wood">0</span></span>
+                    <span>🍖 <span id="clan-food">0</span></span>
+                    <span>🔫 <span id="clan-ammo">0</span></span>
+                    <span>💊 <span id="clan-meds">0</span></span>
+                </div>
+
+                <div class="clan-members" id="clan-members-list">
+                    <!-- Members rendered here -->
+                </div>
+
+                <div class="clan-actions">
+                    <button class="btn btn-primary" id="btn-clan-base">🏗️ База</button>
+                    <button class="btn btn-secondary" id="btn-clan-deposit">📦 Сдать ресурсы</button>
+                    <button class="btn btn-danger" id="btn-clan-leave">Покинуть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Base screen -->
+    <div id="base-screen" class="screen hidden">
+        <div class="base-container">
+            <div class="shop-header">
+                <button class="btn-back" id="btn-base-back">← Назад</button>
+                <h2>База клана</h2>
+                <div></div>
+            </div>
+            <canvas id="base-canvas"></canvas>
+            <div id="build-menu" class="build-menu"></div>
+        </div>
+    </div>
+
     <!-- Game container -->
     <div id="game-container" class="hidden"></div>
 
@@ -183,6 +249,41 @@
             </div>
             <div class="reload-bar hidden" id="reload-bar">
                 <div class="reload-fill" id="reload-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- World HUD -->
+    <div id="world-hud" class="hidden">
+        <div class="world-hud-top">
+            <button id="btn-world-pause" class="pause-btn">⏸</button>
+            <div class="world-resources-bar">
+                <span>⛏️ <span id="world-metal">0</span></span>
+                <span>🪵 <span id="world-wood">0</span></span>
+                <span>🍖 <span id="world-food">0</span></span>
+                <span>🔫 <span id="world-ammo">0</span></span>
+                <span>💊 <span id="world-meds">0</span></span>
+            </div>
+        </div>
+        <div class="world-hud-bottom">
+            <div class="health-bar">
+                <div class="health-fill" id="world-health"></div>
+                <span class="health-text" id="world-health-text">100/100</span>
+            </div>
+            <span id="world-weapon-ammo" class="world-ammo-text">17/17</span>
+            <button class="btn btn-small btn-medkit" id="btn-use-medkit">💊 Аптечка</button>
+            <button class="btn btn-small btn-collect" id="btn-collect-resource">📦 Собрать</button>
+        </div>
+    </div>
+
+    <!-- World exit confirmation -->
+    <div id="world-exit-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Выйти из мира?</h3>
+            <p class="exit-text">Прогресс будет сохранён.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-danger" id="btn-world-exit-confirm">Выйти</button>
+                <button class="btn btn-secondary" id="btn-world-exit-cancel">Отмена</button>
             </div>
         </div>
     </div>
@@ -239,6 +340,6 @@
         </div>
     </div>
 
-    <script type="module" src="/js/main.js?v=22"></script>
+    <script type="module" src="/js/main.js?v=23"></script>
 </body>
 </html>

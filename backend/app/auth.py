@@ -6,6 +6,7 @@ from urllib.parse import parse_qsl
 from typing import Optional
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+DEV_MODE = os.getenv("DEV_MODE", "").lower() in ("1", "true", "yes")
 
 
 def validate_telegram_data(init_data: str) -> Optional[dict]:
@@ -16,8 +17,8 @@ def validate_telegram_data(init_data: str) -> Optional[dict]:
     if not init_data:
         return None
 
-    if not BOT_TOKEN:
-        # Dev mode - parse without validation
+    if DEV_MODE or not BOT_TOKEN:
+        # Dev mode - parse without HMAC validation
         try:
             data = dict(parse_qsl(init_data))
             if "user" in data:

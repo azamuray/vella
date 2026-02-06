@@ -1,6 +1,7 @@
 """
 Типы зданий для базы клана
 """
+from sqlalchemy import select
 
 BUILDING_TYPES = [
     # Защитные
@@ -128,7 +129,7 @@ BUILDING_TYPES = [
 
 async def seed_building_types(db):
     """Заполнить таблицу типов зданий"""
-    from ..models import BuildingType
+    from ...models import BuildingType
 
     for bt_data in BUILDING_TYPES:
         existing = await db.execute(

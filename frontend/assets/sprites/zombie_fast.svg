@@ -1,25 +1,112 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
-  <!-- Top-down zombie - fast/runner -->
+  <defs>
+    <radialGradient id="zf_skin" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#a0a898"/>
+      <stop offset="60%" stop-color="#8a9480"/>
+      <stop offset="100%" stop-color="#6a7a60"/>
+    </radialGradient>
+    <radialGradient id="zf_head" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#b0b8a0"/>
+      <stop offset="60%" stop-color="#909880"/>
+      <stop offset="100%" stop-color="#707860"/>
+    </radialGradient>
+  </defs>
 
-  <!-- Skinny body -->
-  <ellipse cx="18" cy="22" rx="6" ry="10" fill="#6a5a4a"/>
+  <!-- Shadow -->
+  <ellipse cx="18" cy="20" rx="7" ry="10" fill="#00000025"/>
 
-  <!-- Narrow shoulders -->
-  <ellipse cx="18" cy="16" rx="10" ry="5" fill="#5a4a3a"/>
+  <!-- Left leg (back, trailing) - running pose -->
+  <path d="M14 25 Q13 28 12 31 Q11.5 32.5 12.5 33" fill="none" stroke="#8a9480" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right leg (forward, extended) -->
+  <path d="M22 24 Q23 21 24 18 Q24.5 16.5 23.5 16" fill="none" stroke="#8a9480" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Torn shorts -->
+  <path d="M13 24 Q14 26 13 27.5 L12.5 27 L14 25" fill="#3a3530"/>
+  <path d="M23 23 Q22 21 23 19.5 L23.5 20 L22 22" fill="#3a3530"/>
+  <!-- Torn edges on shorts -->
+  <path d="M12.5 27.5 l-0.3 0.5 l0.6 0.2 l-0.2 0.5" fill="none" stroke="#2a2520" stroke-width="0.3"/>
+  <path d="M23.5 19.5 l0.3 -0.5 l-0.5 -0.2 l0.2 -0.4" fill="none" stroke="#2a2520" stroke-width="0.3"/>
 
-  <!-- Head (top view) -->
-  <circle cx="18" cy="8" r="7" fill="#8a7a5a"/>
+  <!-- Bony feet -->
+  <ellipse cx="12.5" cy="33.2" rx="1.2" ry="0.8" fill="#7a8470"/>
+  <ellipse cx="23.5" cy="15.8" rx="1.2" ry="0.8" fill="#7a8470"/>
 
-  <!-- Long arms stretched forward (running pose) -->
-  <rect x="0" y="10" width="12" height="3" rx="1.5" fill="#8a7a5a" transform="rotate(-15 6 11)"/>
-  <rect x="24" y="10" width="12" height="3" rx="1.5" fill="#8a7a5a" transform="rotate(15 30 11)"/>
+  <!-- Torso - thin, emaciated -->
+  <path d="M14 14 Q13 18 13.5 25 Q15.5 26 18 26 Q20.5 26 22.5 25 Q23 18 22 14 Z" fill="url(#zf_skin)"/>
+  <!-- Visible ribs -->
+  <path d="M14.5 17 Q16 17.5 17 17" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.7"/>
+  <path d="M14.8 19 Q16.5 19.5 17.5 19" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.7"/>
+  <path d="M15 21 Q16.5 21.5 17.5 21" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.7"/>
+  <path d="M19 17 Q20.5 17.5 21.5 17" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.7"/>
+  <path d="M19 19 Q20.5 19.5 21.2 19" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.7"/>
+  <path d="M19.2 21 Q20.5 21.5 21 21" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.7"/>
+  <!-- Spine visible from top -->
+  <line x1="18" y1="15" x2="18" y2="25" stroke="#5a6a50" stroke-width="0.6" opacity="0.5"/>
 
-  <!-- Sharp claws -->
-  <path d="M0 6 L-2 4 M0 8 L-3 8 M0 10 L-2 12" stroke="#5a4a3a" stroke-width="1.5" fill="none"/>
-  <path d="M36 6 L38 4 M36 8 L39 8 M36 10 L38 12" stroke="#5a4a3a" stroke-width="1.5" fill="none"/>
+  <!-- Blood stains -->
+  <ellipse cx="16" cy="20" rx="1" ry="0.7" fill="#8b0000" opacity="0.5"/>
+  <circle cx="20" cy="17" r="0.6" fill="#8b0000" opacity="0.4"/>
 
-  <!-- Speed lines behind -->
-  <line x1="14" y1="32" x2="14" y2="36" stroke="#aaa" stroke-width="1" opacity="0.4"/>
-  <line x1="18" y1="32" x2="18" y2="36" stroke="#aaa" stroke-width="1" opacity="0.4"/>
-  <line x1="22" y1="32" x2="22" y2="36" stroke="#aaa" stroke-width="1" opacity="0.4"/>
+  <!-- Left arm - reaching forward aggressively -->
+  <path d="M14 15 Q11 12 9 8 Q8 6 9 4.5" fill="none" stroke="#8a9480" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Skeletal elbow bump -->
+  <circle cx="11" cy="11" r="0.8" fill="#7a8470"/>
+  <!-- Left hand - bony claws -->
+  <circle cx="9" cy="4.8" r="1.3" fill="#909880"/>
+  <line x1="8" y1="4" x2="7.5" y2="2.5" stroke="#7a8470" stroke-width="0.6" stroke-linecap="round"/>
+  <line x1="9" y1="3.5" x2="8.8" y2="2" stroke="#7a8470" stroke-width="0.6" stroke-linecap="round"/>
+  <line x1="10" y1="4" x2="10.3" y2="2.5" stroke="#7a8470" stroke-width="0.6" stroke-linecap="round"/>
+  <!-- Bony finger tips -->
+  <circle cx="7.3" cy="2.3" r="0.25" fill="#5a6450"/>
+  <circle cx="8.6" cy="1.8" r="0.25" fill="#5a6450"/>
+  <circle cx="10.2" cy="2.3" r="0.25" fill="#5a6450"/>
+
+  <!-- Right arm - pulled back (running motion) -->
+  <path d="M22 15 Q25 19 26 24 Q26.5 26 25.5 27" fill="none" stroke="#8a9480" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Right hand -->
+  <circle cx="25.5" cy="27" r="1.2" fill="#909880"/>
+  <line x1="25" y1="28" x2="24.5" y2="29" stroke="#7a8470" stroke-width="0.5" stroke-linecap="round"/>
+  <line x1="26" y1="28.2" x2="26" y2="29.3" stroke="#7a8470" stroke-width="0.5" stroke-linecap="round"/>
+  <line x1="26.8" y1="27.8" x2="27.3" y2="28.8" stroke="#7a8470" stroke-width="0.5" stroke-linecap="round"/>
+
+  <!-- Wound on left arm -->
+  <ellipse cx="10" cy="8" rx="0.5" ry="1" fill="#8b0000" opacity="0.6"/>
+
+  <!-- Head - gaunt, angular -->
+  <ellipse cx="18" cy="10" rx="4.2" ry="5" fill="url(#zf_head)"/>
+  <!-- Sunken cheeks -->
+  <path d="M14.5 10 Q15.5 11 15 12" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.6"/>
+  <path d="M21.5 10 Q20.5 11 21 12" fill="none" stroke="#6a7a60" stroke-width="0.5" opacity="0.6"/>
+
+  <!-- Patchy thin hair -->
+  <path d="M14.5 7 Q15 5 17 4.5 Q18 4.2 19 4.5 Q21 5 21.5 7" fill="#3a3028" opacity="0.7"/>
+  <path d="M15 6.5 Q14 4 13.5 3.5" fill="none" stroke="#3a3028" stroke-width="0.5" opacity="0.6"/>
+  <path d="M21 6.5 Q22 4 22.5 3.5" fill="none" stroke="#3a3028" stroke-width="0.5" opacity="0.6"/>
+  <!-- Bald patches -->
+  <ellipse cx="16" cy="6" rx="1" ry="0.6" fill="url(#zf_head)" opacity="0.8"/>
+
+  <!-- Eyes - wide, frantic -->
+  <ellipse cx="16" cy="9" rx="1.4" ry="1.2" fill="#d8d8c0"/>
+  <circle cx="16" cy="9" r="0.6" fill="#882222"/>
+  <circle cx="16" cy="9" r="0.25" fill="#220000"/>
+  <ellipse cx="20" cy="9" rx="1.4" ry="1.2" fill="#d8d8c0"/>
+  <circle cx="20" cy="9" r="0.6" fill="#882222"/>
+  <circle cx="20" cy="9" r="0.25" fill="#220000"/>
+
+  <!-- Nose (just nostrils from top) -->
+  <circle cx="17.5" cy="11" r="0.35" fill="#5a6a50"/>
+  <circle cx="18.5" cy="11" r="0.35" fill="#5a6a50"/>
+
+  <!-- Mouth - snarling -->
+  <path d="M16 12.5 Q18 13.8 20 12.5" fill="#2a1010"/>
+  <!-- Teeth -->
+  <line x1="16.8" y1="12.6" x2="16.8" y2="13.2" stroke="#c0b090" stroke-width="0.4"/>
+  <line x1="18" y1="12.8" x2="18" y2="13.5" stroke="#c0b090" stroke-width="0.4"/>
+  <line x1="19.2" y1="12.6" x2="19.2" y2="13.2" stroke="#c0b090" stroke-width="0.4"/>
+
+  <!-- Blood dripping from mouth -->
+  <path d="M17 13.5 Q17.2 14.5 17 15" fill="none" stroke="#8b0000" stroke-width="0.4" opacity="0.7"/>
+
+  <!-- Scratches on head -->
+  <path d="M21 7 L22 8.5" stroke="#8b0000" stroke-width="0.4" opacity="0.6"/>
+  <path d="M21.5 7.5 L22.5 8" stroke="#8b0000" stroke-width="0.4" opacity="0.6"/>
 </svg>

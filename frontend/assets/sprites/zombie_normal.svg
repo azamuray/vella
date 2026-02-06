@@ -1,27 +1,120 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-  <!-- Top-down zombie - normal -->
+  <defs>
+    <radialGradient id="zn_skin" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#7a9a6a"/>
+      <stop offset="70%" stop-color="#5c7a4c"/>
+      <stop offset="100%" stop-color="#4a6040"/>
+    </radialGradient>
+    <radialGradient id="zn_head" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#8aaa7a"/>
+      <stop offset="60%" stop-color="#6a8a5a"/>
+      <stop offset="100%" stop-color="#4a6a3a"/>
+    </radialGradient>
+    <linearGradient id="zn_shirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Body -->
-  <ellipse cx="20" cy="24" rx="10" ry="12" fill="#5a7247"/>
+  <!-- Shadow under body -->
+  <ellipse cx="20" cy="22" rx="9" ry="11" fill="#00000030"/>
 
-  <!-- Shoulders (hunched) -->
-  <ellipse cx="20" cy="18" rx="14" ry="7" fill="#4a6237"/>
+  <!-- Legs (dark torn pants) -->
+  <rect x="14" y="27" width="4.5" height="7" rx="1.5" fill="#2a2a30" transform="rotate(-8 16 30)"/>
+  <rect x="21.5" y="27" width="4.5" height="7" rx="1.5" fill="#2a2a30" transform="rotate(8 24 30)"/>
+  <!-- Torn pant edges -->
+  <path d="M14 33 l0.5 1.5 l1 -0.5 l0.8 1 l1.2 -0.8 l0.5 0.8" fill="none" stroke="#1a1a20" stroke-width="0.4"/>
+  <path d="M22 33 l0.4 1.2 l1.1 -0.3 l0.6 1.1 l1 -0.6 l0.5 0.7" fill="none" stroke="#1a1a20" stroke-width="0.4"/>
+  <!-- Exposed skin on legs -->
+  <rect x="15" y="32" width="2" height="2" rx="0.5" fill="#6a8a5a" opacity="0.7"/>
 
-  <!-- Head (top view) -->
-  <circle cx="20" cy="10" r="9" fill="#7a9b5a"/>
+  <!-- Torso / shirt -->
+  <path d="M12 16 Q11 20 12 27 Q16 29 20 29 Q24 29 28 27 Q29 20 28 16 Z" fill="url(#zn_shirt)"/>
+  <!-- Shirt tear lines -->
+  <path d="M14 18 l3 1.5 l-1 2" fill="none" stroke="#1a1a20" stroke-width="0.5"/>
+  <path d="M24 20 l2 0.5 l0.5 2.5" fill="none" stroke="#1a1a20" stroke-width="0.5"/>
+  <!-- Torn shirt hole exposing flesh -->
+  <ellipse cx="17" cy="22" rx="2" ry="1.5" fill="#5c7a4c"/>
+  <ellipse cx="17" cy="22" rx="1.2" ry="0.8" fill="#8b0000" opacity="0.6"/>
+  <!-- Another tear -->
+  <path d="M23 24 Q25 23.5 25.5 25 Q24 26 23 25 Z" fill="#5c7a4c"/>
 
-  <!-- Bald/rotting top of head -->
-  <circle cx="20" cy="9" r="6" fill="#5a7b4a"/>
+  <!-- Blood stains on torso -->
+  <ellipse cx="22" cy="19" rx="1.5" ry="1" fill="#8b0000" opacity="0.5" transform="rotate(15 22 19)"/>
+  <ellipse cx="15" cy="25" rx="1" ry="1.5" fill="#8b0000" opacity="0.4"/>
+  <circle cx="25" cy="23" r="0.8" fill="#6b0000" opacity="0.5"/>
+  <!-- Blood drip -->
+  <path d="M22 19 Q22.5 21 22 22" fill="none" stroke="#8b0000" stroke-width="0.5" opacity="0.6"/>
 
-  <!-- Arms reaching forward -->
-  <rect x="2" y="16" width="10" height="4" rx="2" fill="#7a9b5a" transform="rotate(-30 7 18)"/>
-  <rect x="28" y="16" width="10" height="4" rx="2" fill="#7a9b5a" transform="rotate(30 33 18)"/>
+  <!-- Left arm reaching forward -->
+  <path d="M12 17 Q8 15 7 11 Q6 8 8 6" fill="none" stroke="url(#zn_skin)" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Left arm torn sleeve -->
+  <path d="M12 17 Q10 16 9.5 14" fill="none" stroke="#3a3a3a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M9 14 l-0.5 -0.8 l0.8 -0.2 l-0.3 -1" fill="none" stroke="#2a2a2a" stroke-width="0.4"/>
+  <!-- Left hand/claws -->
+  <circle cx="8" cy="6.5" r="1.8" fill="#6a8a5a"/>
+  <line x1="7" y1="5" x2="6.5" y2="3.5" stroke="#5a7a4a" stroke-width="0.7" stroke-linecap="round"/>
+  <line x1="8" y1="4.8" x2="7.8" y2="3.2" stroke="#5a7a4a" stroke-width="0.7" stroke-linecap="round"/>
+  <line x1="9" y1="5.2" x2="9.2" y2="3.8" stroke="#5a7a4a" stroke-width="0.7" stroke-linecap="round"/>
+  <!-- Dirty nails -->
+  <circle cx="6.3" cy="3.3" r="0.35" fill="#3a3a2a"/>
+  <circle cx="7.6" cy="3" r="0.35" fill="#3a3a2a"/>
+  <circle cx="9.1" cy="3.6" r="0.35" fill="#3a3a2a"/>
 
-  <!-- Claws/hands -->
-  <circle cx="4" cy="12" r="3" fill="#6a8b4a"/>
-  <circle cx="36" cy="12" r="3" fill="#6a8b4a"/>
+  <!-- Right arm reaching forward -->
+  <path d="M28 17 Q32 15 33 11 Q34 8 32 6" fill="none" stroke="url(#zn_skin)" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Right arm torn sleeve -->
+  <path d="M28 17 Q30 16 30.5 14" fill="none" stroke="#3a3a3a" stroke-width="4" stroke-linecap="round"/>
+  <path d="M31 14 l0.5 -0.8 l-0.7 -0.3 l0.4 -0.9" fill="none" stroke="#2a2a2a" stroke-width="0.4"/>
+  <!-- Right hand/claws -->
+  <circle cx="32" cy="6.5" r="1.8" fill="#6a8a5a"/>
+  <line x1="31" y1="5" x2="30.8" y2="3.5" stroke="#5a7a4a" stroke-width="0.7" stroke-linecap="round"/>
+  <line x1="32" y1="4.8" x2="32.2" y2="3.2" stroke="#5a7a4a" stroke-width="0.7" stroke-linecap="round"/>
+  <line x1="33" y1="5.2" x2="33.5" y2="3.8" stroke="#5a7a4a" stroke-width="0.7" stroke-linecap="round"/>
+  <circle cx="30.6" cy="3.3" r="0.35" fill="#3a3a2a"/>
+  <circle cx="32" cy="3" r="0.35" fill="#3a3a2a"/>
+  <circle cx="33.3" cy="3.6" r="0.35" fill="#3a3a2a"/>
 
-  <!-- Wounds on head -->
-  <ellipse cx="16" cy="8" rx="2" ry="1.5" fill="#4a3030"/>
-  <ellipse cx="24" cy="12" rx="1.5" ry="2" fill="#4a3030"/>
+  <!-- Wound on right arm -->
+  <ellipse cx="33" cy="10" rx="0.8" ry="1.5" fill="#8b0000" opacity="0.7" transform="rotate(20 33 10)"/>
+
+  <!-- Head -->
+  <ellipse cx="20" cy="12" rx="5.5" ry="6" fill="url(#zn_head)"/>
+  <!-- Skull contour / brow ridge -->
+  <path d="M15 10.5 Q17 9 20 8.5 Q23 9 25 10.5" fill="none" stroke="#4a6a3a" stroke-width="0.6"/>
+
+  <!-- Messy hair (top of head) -->
+  <path d="M15 9 Q14 6 16 5 Q18 4 20 4.5 Q22 4 24 5 Q26 6 25 9" fill="#2a1a1a"/>
+  <!-- Stray hair strands -->
+  <path d="M15.5 8 Q14 5 13 4" fill="none" stroke="#2a1a1a" stroke-width="0.6" stroke-linecap="round"/>
+  <path d="M17 7 Q16.5 4 15.5 3" fill="none" stroke="#2a1a1a" stroke-width="0.5" stroke-linecap="round"/>
+  <path d="M24 7 Q24.5 4.5 26 3.5" fill="none" stroke="#2a1a1a" stroke-width="0.5" stroke-linecap="round"/>
+  <path d="M25 8 Q26.5 5.5 27.5 5" fill="none" stroke="#2a1a1a" stroke-width="0.6" stroke-linecap="round"/>
+
+  <!-- Eyes (milky white, dead) -->
+  <ellipse cx="17.5" cy="10.5" rx="1.3" ry="1" fill="#d4d4b0"/>
+  <circle cx="17.5" cy="10.5" r="0.5" fill="#444433"/>
+  <ellipse cx="22.5" cy="10.5" rx="1.3" ry="1" fill="#d4d4b0"/>
+  <circle cx="22.5" cy="10.5" r="0.5" fill="#444433"/>
+
+  <!-- Dark circles under eyes -->
+  <path d="M16 11.5 Q17.5 12.5 19 11.5" fill="none" stroke="#3a4a30" stroke-width="0.5" opacity="0.7"/>
+  <path d="M21 11.5 Q22.5 12.5 24 11.5" fill="none" stroke="#3a4a30" stroke-width="0.5" opacity="0.7"/>
+
+  <!-- Mouth (open, moaning) -->
+  <ellipse cx="20" cy="14" rx="2" ry="1.2" fill="#3a1a1a"/>
+  <!-- Teeth -->
+  <rect x="18.5" y="13" width="0.7" height="0.8" rx="0.1" fill="#c0b090"/>
+  <rect x="19.8" y="13" width="0.7" height="0.9" rx="0.1" fill="#c0b090"/>
+  <rect x="21" y="13" width="0.6" height="0.7" rx="0.1" fill="#b0a080"/>
+  <!-- Blood on mouth -->
+  <path d="M19 15 Q20 15.8 21 15" fill="none" stroke="#8b0000" stroke-width="0.5"/>
+  <circle cx="21.5" cy="14.5" r="0.4" fill="#8b0000" opacity="0.6"/>
+
+  <!-- Head wound -->
+  <path d="M23 8 Q24 7.5 24.5 8.5" fill="none" stroke="#8b0000" stroke-width="0.7"/>
+  <ellipse cx="23.5" cy="8" rx="0.8" ry="0.5" fill="#6b0000" opacity="0.5"/>
+
+  <!-- Exposed neck/collar area detail -->
+  <path d="M16 16 Q20 17.5 24 16" fill="none" stroke="#4a6a3a" stroke-width="0.5"/>
 </svg>

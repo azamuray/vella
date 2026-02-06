@@ -8,6 +8,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://vella:vella@db:5432/vella
       - REDIS_URL=redis://redis:6379
       - BOT_TOKEN=${BOT_TOKEN:-}
+      - DEV_MODE=${DEV_MODE:-true}
     depends_on:
       db:
         condition: service_healthy
