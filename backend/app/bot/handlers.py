@@ -6,7 +6,7 @@ from aiogram import Router, F, Bot
 from aiogram.types import (
     Message, CallbackQuery,
     InlineKeyboardMarkup, InlineKeyboardButton,
-    WebAppInfo, ChatMemberAdministrator, ChatMemberOwner,
+    ChatMemberAdministrator, ChatMemberOwner,
 )
 from aiogram.filters import Command
 from aiogram.enums import ChatType
@@ -239,7 +239,7 @@ async def cmd_play(message: Message):
         [
             InlineKeyboardButton(
                 text="🎮 Играть в VELLA",
-                web_app=WebAppInfo(url=WEBAPP_URL)
+                url=WEBAPP_URL,
             )
         ]
     ])
