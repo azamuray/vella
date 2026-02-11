@@ -50,7 +50,7 @@ services:
       - POSTGRES_PASSWORD=vella
       - POSTGRES_DB=vella
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vella"]
       interval: 5s
@@ -74,6 +74,5 @@ networks:
     external: true
 
 volumes:
-  postgres_data:
   redis_data:
   telethon_data:
