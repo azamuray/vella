@@ -84,6 +84,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load player data
     await loadPlayerData();
 
+    // Show debug button only for admin
+    if (window.VELLA.player?.username === 'azamuray') {
+        document.getElementById('btn-kill-all').classList.remove('hidden');
+    }
+
     // Show menu
     hideScreen('loading-screen');
     showScreen('menu-screen');
@@ -322,6 +327,12 @@ function setupEventListeners() {
         // Hide wave complete, show shop (can still ready from shop)
         hideScreen('wave-complete');
         showInGameShop();
+    });
+
+    // Wave exit button
+    document.getElementById('btn-wave-exit').addEventListener('click', () => {
+        hideScreen('wave-complete');
+        leaveRoom();
     });
 
     // Ready button on wave complete screen

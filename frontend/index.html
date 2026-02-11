@@ -246,38 +246,39 @@
     <div id="hud" class="hidden">
         <!-- Pause button -->
         <button id="btn-pause" class="pause-btn">⏸</button>
-        <!-- Debug button -->
-        <button id="btn-kill-all" class="debug-btn">☠️ Убить всех</button>
+        <!-- Debug button (admin only) -->
+        <button id="btn-kill-all" class="debug-btn hidden">☠️ Убить всех</button>
         <div class="hud-top">
-            <div class="wave-info">
-                <span class="label">Волна</span>
-                <span id="hud-wave">1</span>
+            <div class="hud-top-row">
+                <div class="wave-info">
+                    <span class="label">Волна</span>
+                    <span id="hud-wave">1</span>
+                </div>
+                <div class="zombies-info">
+                    <span class="label">🧟</span>
+                    <span id="hud-zombies">0</span>
+                </div>
+                <div class="kills-info">
+                    <span class="label">💀</span>
+                    <span id="hud-kills">0</span>
+                </div>
+                <div class="coins-info">
+                    <span class="label">💰</span>
+                    <span id="hud-coins">0</span>
+                </div>
             </div>
-            <div class="zombies-info">
-                <span class="label">🧟</span>
-                <span id="hud-zombies">0</span>
-            </div>
-            <div class="kills-info">
-                <span class="label">💀</span>
-                <span id="hud-kills">0</span>
-            </div>
-            <div class="coins-info">
-                <span class="label">💰</span>
-                <span id="hud-coins">0</span>
-            </div>
-        </div>
-
-        <div class="hud-bottom">
-            <div class="health-bar">
-                <div class="health-fill" id="hud-health"></div>
-                <span class="health-text" id="hud-health-text">100/100</span>
-            </div>
-            <div class="ammo-info">
-                <span id="hud-ammo">17</span> / <span id="hud-max-ammo">17</span>
-                <span id="hud-weapon-name">Glock 17</span>
-            </div>
-            <div class="reload-bar hidden" id="reload-bar">
-                <div class="reload-fill" id="reload-fill"></div>
+            <div class="hud-status-row">
+                <div class="health-bar">
+                    <div class="health-fill" id="hud-health"></div>
+                    <span class="health-text" id="hud-health-text">100/100</span>
+                </div>
+                <div class="ammo-info">
+                    <span id="hud-ammo">17</span>/<span id="hud-max-ammo">17</span>
+                    <span id="hud-weapon-name">Glock 17</span>
+                </div>
+                <div class="reload-bar hidden" id="reload-bar">
+                    <div class="reload-fill" id="reload-fill"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -370,6 +371,9 @@
                 <button class="btn btn-secondary" id="btn-wave-shop">
                     🔫 Магазин
                 </button>
+                <button class="btn btn-danger" id="btn-wave-exit">
+                    Выйти
+                </button>
             </div>
         </div>
     </div>
@@ -405,6 +409,6 @@
     <!-- Toast notifications -->
     <div id="toast-container"></div>
 
-    <script type="module" src="/js/main.js?v=34"></script>
+    <script type="module" src="/js/main.js?v=35"></script>
 </body>
 </html>
