@@ -15,15 +15,16 @@ from ..models import Player, StarRewardLog
 # Award interval in seconds (1 hour)
 REWARD_INTERVAL = 3600
 
-# Rates: stars per hour for each position
+# Budget: ~100 RUB/day = ~55 stars/day (182 RUB per 100 stars)
+# Split 60/30/10 across 24 hours:
 STAR_RATES = {
-    1: 1.0,       # 1st place: 1 star/hour
-    2: 1 / 3,     # 2nd place: 1 star per 3 hours
-    3: 1 / 10,    # 3rd place: 1 star per 10 hours
+    1: 1.375,     # 1st place: ~33 stars/day → 100⭐ in ~3 days
+    2: 0.6875,    # 2nd place: ~16.5 stars/day → 100⭐ in ~6 days
+    3: 0.229,     # 3rd place: ~5.5 stars/day → 100⭐ in ~18 days
 }
 
-# Minimum stars to trigger a notification
-MIN_SEND_AMOUNT = 50
+# Minimum stars to trigger a notification (= min Telegram gift)
+MIN_SEND_AMOUNT = 100
 
 ADMIN_TELEGRAM_ID = int(os.getenv("ADMIN_TELEGRAM_ID") or 0)
 
