@@ -65,6 +65,9 @@
                 <button class="btn btn-secondary" id="btn-shop">
                     <span class="icon">🔫</span> Магазин
                 </button>
+                <button class="btn btn-secondary" id="btn-leaderboard">
+                    <span class="icon">🏆</span> Лидерборд
+                </button>
             </div>
 
             <div class="equipped-weapon">
@@ -116,6 +119,20 @@
 
             <div class="weapons-grid" id="weapons-list">
                 <!-- Weapons will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard screen -->
+    <div id="leaderboard-screen" class="screen hidden">
+        <div class="leaderboard-container">
+            <div class="shop-header">
+                <button class="btn-back" id="btn-leaderboard-back">← Назад</button>
+                <h2>🏆 Лидерборд</h2>
+                <div></div>
+            </div>
+            <div id="leaderboard-list" class="leaderboard-list">
+                <p class="loading-rooms">Загрузка...</p>
             </div>
         </div>
     </div>
@@ -383,6 +400,6 @@
     <!-- Toast notifications -->
     <div id="toast-container"></div>
 
-    <script type="module" src="/js/main.js?v=28"></script>
+    <script type="module" src="/js/main.js?v=29"></script>
 </body>
 </html>

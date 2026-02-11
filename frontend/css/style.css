@@ -772,6 +772,63 @@ html, body {
     margin-bottom: 0.75rem;
 }
 
+/* ============== LEADERBOARD SCREEN ============== */
+.leaderboard-container {
+    width: 100%;
+    height: 100%;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid transparent;
+}
+
+.lb-row.lb-me {
+    border-color: var(--warning);
+    background: rgba(251, 191, 36, 0.1);
+}
+
+.lb-rank {
+    width: 32px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-dim);
+    flex-shrink: 0;
+}
+
+.lb-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-stat {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.lb-row.lb-me .lb-name {
+    color: var(--warning);
+}
+
 /* Premium Weapons */
 .weapon-card.premium {
     border-color: #ffd700;

@@ -250,6 +250,17 @@ function setupEventListeners() {
         hideModal('world-exit-modal');
     });
 
+    // Leaderboard button
+    document.getElementById('btn-leaderboard').addEventListener('click', () => {
+        showLeaderboard();
+    });
+
+    // Leaderboard back
+    document.getElementById('btn-leaderboard-back').addEventListener('click', () => {
+        hideScreen('leaderboard-screen');
+        showScreen('menu-screen');
+    });
+
     // Shop button
     document.getElementById('btn-shop').addEventListener('click', () => {
         showShop();
@@ -692,6 +703,56 @@ function endGame(data) {
     });
 
     showScreen('gameover-screen');
+}
+
+// ============== LEADERBOARD ==============
+
+async function showLeaderboard() {
+    hideScreen('menu-screen');
+    showScreen('leaderboard-screen');
+    await loadLeaderboard();
+}
+
+async function loadLeaderboard() {
+    const listEl = document.getElementById('leaderboard-list');
+    listEl.innerHTML = '<p class="loading-rooms">Загрузка...</p>';
+
+    try {
+        const response = await fetch('/api/leaderboard');
+        if (!response.ok) throw new Error('Failed to load');
+        const players = await response.json();
+
+        if (players.length === 0) {
+            listEl.innerHTML = '<p class="no-rooms">Пока нет данных</p>';
+            return;
+        }
+
+        listEl.innerHTML = '';
+        const medals = ['🥇', '🥈', '🥉'];
+        const currentUsername = window.VELLA.player?.username;
+
+        for (const player of players) {
+            const row = document.createElement('div');
+            const isMe = currentUsername && player.username === currentUsername;
+            row.className = `lb-row${isMe ? ' lb-me' : ''}`;
+
+            const rankText = player.position <= 3
+                ? medals[player.position - 1]
+                : `#${player.position}`;
+
+            row.innerHTML = `
+                <span class="lb-rank">${rankText}</span>
+                <span class="lb-name">${player.username || 'Игрок'}</span>
+                <span class="lb-stat">🌊 ${player.highest_wave}</span>
+                <span class="lb-stat">${player.total_kills} 💀</span>
+                <span class="lb-stat">${player.star_balance} ⭐</span>
+            `;
+            listEl.appendChild(row);
+        }
+    } catch (error) {
+        listEl.innerHTML = '<p class="no-rooms">Ошибка загрузки</p>';
+        console.error('Failed to load leaderboard:', error);
+    }
 }
 
 async function showShop() {
