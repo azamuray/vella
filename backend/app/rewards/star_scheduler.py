@@ -12,15 +12,15 @@ from sqlalchemy import select, desc
 from ..database import async_session
 from ..models import Player, StarRewardLog
 
-# Award interval in seconds (1 hour)
-REWARD_INTERVAL = 3600
+# Award interval in seconds (1 minute)
+REWARD_INTERVAL = 60
 
 # Budget: ~100 RUB/day = ~55 stars/day (182 RUB per 100 stars)
-# Split 60/30/10 across 24 hours:
+# Split 60/30/10 across 1440 minutes/day:
 STAR_RATES = {
-    1: 1.375,     # 1st place: ~33 stars/day → 100⭐ in ~3 days
-    2: 0.6875,    # 2nd place: ~16.5 stars/day → 100⭐ in ~6 days
-    3: 0.229,     # 3rd place: ~5.5 stars/day → 100⭐ in ~18 days
+    1: 0.02292,   # 1st place: ~33 stars/day → 100⭐ in ~3 days
+    2: 0.01146,   # 2nd place: ~16.5 stars/day → 100⭐ in ~6 days
+    3: 0.00382,   # 3rd place: ~5.5 stars/day → 100⭐ in ~18 days
 }
 
 # Minimum stars to trigger a notification (= min Telegram gift)
@@ -55,10 +55,14 @@ class StarScheduler:
         # Wait a bit before first cycle
         await asyncio.sleep(10)
 
+        self._tick = 0
         while self._running:
             try:
                 await self._award_stars()
-                await self._notify_admin()
+                # Notify admin once per hour (every 60 ticks)
+                self._tick += 1
+                if self._tick % 60 == 0:
+                    await self._notify_admin()
             except Exception as e:
                 print(f"[StarScheduler] Error in loop: {e}")
                 traceback.print_exc()
