@@ -62,12 +62,15 @@ export class GameManager {
     preload() {
         const scene = this.game.scene.scenes[0];
 
-        // Load SVG sprites
-        scene.load.svg('player', '/assets/sprites/player.svg', { width: 48, height: 48 });
-        scene.load.svg('zombie_normal', '/assets/sprites/zombie_normal.svg', { width: 40, height: 40 });
-        scene.load.svg('zombie_fast', '/assets/sprites/zombie_fast.svg', { width: 32, height: 32 });
-        scene.load.svg('zombie_tank', '/assets/sprites/zombie_tank.svg', { width: 56, height: 56 });
-        scene.load.svg('zombie_boss', '/assets/sprites/zombie_boss.svg', { width: 72, height: 72 });
+        // Load animated spritesheets (same as open world)
+        scene.load.spritesheet('player_idle', '/assets/sprites/player_idle.png', { frameWidth: 219, frameHeight: 165 });
+        scene.load.spritesheet('player_move', '/assets/sprites/player_move.png', { frameWidth: 219, frameHeight: 165 });
+        scene.load.spritesheet('player_shoot', '/assets/sprites/player_shoot.png', { frameWidth: 219, frameHeight: 165 });
+        scene.load.spritesheet('zombie_idle', '/assets/sprites/zombie_anim_idle.png', { frameWidth: 269, frameHeight: 260 });
+        scene.load.spritesheet('zombie_move', '/assets/sprites/zombie_anim_move.png', { frameWidth: 269, frameHeight: 260 });
+        scene.load.spritesheet('zombie_attack', '/assets/sprites/zombie_anim_attack.png', { frameWidth: 269, frameHeight: 260 });
+        scene.load.image('zombie_tank_img', '/assets/sprites/zombie_tank.png');
+        scene.load.image('zombie_boss_img', '/assets/sprites/zombie_boss.png');
         scene.load.svg('bullet', '/assets/sprites/bullet.svg', { width: 16, height: 8 });
 
         // Load audio
@@ -80,42 +83,9 @@ export class GameManager {
         scene.load.audio('wave_complete', '/assets/audio/wave_complete.ogg');
         scene.load.audio('player_hurt', '/assets/audio/player_hurt.ogg');
 
-        // Fallback: create textures if SVG loading fails
-        scene.load.on('loaderror', (file) => {
-            console.warn('Failed to load:', file.key, '- creating fallback');
-            if (!file.key.startsWith('shoot_') && !file.key.startsWith('zombie_') && !file.key.startsWith('weapon_')) {
-                this.createFallbackTexture(scene, file.key);
-            }
-        });
-
         scene.load.on('complete', () => {
             this.assetsLoaded = true;
-            // List loaded textures for debugging
-            const textures = ['player', 'zombie_normal', 'zombie_fast', 'zombie_tank', 'zombie_boss', 'bullet'];
-            for (const key of textures) {
-                console.log(`Texture ${key}: ${scene.textures.exists(key) ? 'loaded' : 'MISSING'}`);
-            }
         });
-    }
-
-    createFallbackTexture(scene, key) {
-        const graphics = scene.add.graphics();
-
-        const configs = {
-            'player': { color: 0x4ade80, size: 24 },
-            'zombie_normal': { color: 0x5a7247, size: 20 },
-            'zombie_fast': { color: 0x8a7a5a, size: 16 },
-            'zombie_tank': { color: 0x4a5a3a, size: 28 },
-            'zombie_boss': { color: 0x3a4a2a, size: 36 },
-            'bullet': { color: 0xffd700, size: 4 }
-        };
-
-        const config = configs[key] || { color: 0xffffff, size: 16 };
-
-        graphics.fillStyle(config.color);
-        graphics.fillCircle(config.size, config.size, config.size);
-        graphics.generateTexture(key, config.size * 2, config.size * 2);
-        graphics.destroy();
     }
 
     create() {
@@ -125,6 +95,9 @@ export class GameManager {
         this.playerSprites = this.scene.add.group();
         this.zombieSprites = this.scene.add.group();
         this.projectileSprites = this.scene.add.group();
+
+        // Create animations
+        this.createAnimations();
 
         // Create arena background
         this.createArena();
@@ -178,6 +151,48 @@ export class GameManager {
         safeZone.setDepth(1);
     }
 
+    createAnimations() {
+        // Player animations
+        this.scene.anims.create({
+            key: 'player_idle_anim',
+            frames: this.scene.anims.generateFrameNumbers('player_idle', { start: 0, end: 4 }),
+            frameRate: 6,
+            repeat: -1,
+        });
+        this.scene.anims.create({
+            key: 'player_move_anim',
+            frames: this.scene.anims.generateFrameNumbers('player_move', { start: 0, end: 7 }),
+            frameRate: 12,
+            repeat: -1,
+        });
+        this.scene.anims.create({
+            key: 'player_shoot_anim',
+            frames: this.scene.anims.generateFrameNumbers('player_shoot', { start: 0, end: 2 }),
+            frameRate: 10,
+            repeat: 0,
+        });
+
+        // Zombie animations
+        this.scene.anims.create({
+            key: 'zombie_idle_anim',
+            frames: this.scene.anims.generateFrameNumbers('zombie_idle', { start: 0, end: 3 }),
+            frameRate: 4,
+            repeat: -1,
+        });
+        this.scene.anims.create({
+            key: 'zombie_move_anim',
+            frames: this.scene.anims.generateFrameNumbers('zombie_move', { start: 0, end: 7 }),
+            frameRate: 8,
+            repeat: -1,
+        });
+        this.scene.anims.create({
+            key: 'zombie_attack_anim',
+            frames: this.scene.anims.generateFrameNumbers('zombie_attack', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: 0,
+        });
+    }
+
     update(time, delta) {
         // Smooth sprite movements
         for (const player of Object.values(this.players)) {
@@ -185,9 +200,9 @@ export class GameManager {
                 player.sprite.x = Phaser.Math.Linear(player.sprite.x, player.targetX, 0.2);
                 player.sprite.y = Phaser.Math.Linear(player.sprite.y, player.targetY, 0.2);
                 player.nameText.x = player.sprite.x;
-                player.nameText.y = player.sprite.y - 35;
+                player.nameText.y = player.sprite.y - 28;
                 player.healthBar.x = player.sprite.x - 20;
-                player.healthBar.y = player.sprite.y - 28;
+                player.healthBar.y = player.sprite.y - 22;
             }
         }
 
@@ -195,9 +210,13 @@ export class GameManager {
             if (zombie.targetX !== undefined) {
                 zombie.sprite.x = Phaser.Math.Linear(zombie.sprite.x, zombie.targetX, 0.15);
                 zombie.sprite.y = Phaser.Math.Linear(zombie.sprite.y, zombie.targetY, 0.15);
+                if (zombie.indicator) {
+                    zombie.indicator.x = zombie.sprite.x;
+                    zombie.indicator.y = zombie.sprite.y;
+                }
                 if (zombie.healthBar) {
-                    zombie.healthBar.x = zombie.sprite.x - 15;
-                    zombie.healthBar.y = zombie.sprite.y - (zombie.size || 20) - 8;
+                    zombie.healthBar.x = zombie.sprite.x - zombie.size / 2;
+                    zombie.healthBar.y = zombie.sprite.y - zombie.size / 2 - 8;
                 }
             }
         }
@@ -312,17 +331,21 @@ export class GameManager {
         const x = this.scaleX(data.x);
         const y = this.scaleY(data.y);
 
-        const sprite = this.scene.add.sprite(x, y, 'player');
-        sprite.setScale(isMe ? 1.0 : 0.9);
+        const sprite = this.scene.add.sprite(x, y, 'player_idle');
+        sprite.setDisplaySize(48, 36);
         sprite.setDepth(10);
+        sprite.play('player_idle_anim');
 
         // Tint other players blue
         if (!isMe) {
             sprite.setTint(0x60a5fa);
         }
 
+        // Aim line
+        const aimLine = this.scene.add.graphics().setDepth(9);
+
         // Name label
-        const nameText = this.scene.add.text(x, y - 35, data.username || 'Player', {
+        const nameText = this.scene.add.text(x, y - 28, data.username || 'Player', {
             fontSize: '11px',
             fontFamily: 'Arial',
             color: isMe ? '#4ade80' : '#60a5fa',
@@ -336,6 +359,7 @@ export class GameManager {
 
         this.players[data.id] = {
             sprite,
+            aimLine,
             nameText,
             healthBar,
             data,
@@ -349,12 +373,14 @@ export class GameManager {
         const player = this.players[data.id];
         if (!player) return;
 
+        const isMe = data.id === this.myId;
+
         // Save old state for comparison
         const wasReloading = player.data?.reloading || false;
         const oldHp = player.data?.hp;
 
         // Check if player took damage (for sound)
-        if (data.id === this.myId && oldHp !== undefined && data.hp < oldHp && !data.is_dead) {
+        if (isMe && oldHp !== undefined && data.hp < oldHp && !data.is_dead) {
             this.playSound('player_hurt', 0.4);
         }
 
@@ -362,8 +388,47 @@ export class GameManager {
         player.targetX = this.scaleX(data.x);
         player.targetY = this.scaleY(data.y);
 
-        // Update rotation based on aim
-        player.sprite.rotation = data.aim_angle + Math.PI / 2; // Adjust for sprite orientation
+        // Animation switching
+        if (!data.is_dead) {
+            const isMoving = player.data && (
+                Math.abs(this.scaleX(data.x) - this.scaleX(player.data.x)) > 0.5 ||
+                Math.abs(this.scaleY(data.y) - this.scaleY(player.data.y)) > 0.5
+            );
+            const isShooting = data.shooting;
+
+            if (isShooting) {
+                if (player.sprite.anims.currentAnim?.key !== 'player_shoot_anim') {
+                    player.sprite.play('player_shoot_anim');
+                }
+            } else if (isMoving) {
+                if (player.sprite.anims.currentAnim?.key !== 'player_move_anim') {
+                    player.sprite.play('player_move_anim');
+                }
+            } else {
+                if (player.sprite.anims.currentAnim?.key !== 'player_idle_anim') {
+                    player.sprite.play('player_idle_anim');
+                }
+            }
+        }
+
+        // Rotate sprite to face aim direction
+        if (!data.is_dead && data.aim_angle !== undefined) {
+            player.sprite.setRotation(data.aim_angle);
+        }
+
+        // Draw aim line
+        player.aimLine.clear();
+        if (!data.is_dead) {
+            const sx = player.sprite.x;
+            const sy = player.sprite.y;
+            player.aimLine.lineStyle(2, isMe ? 0x4ade80 : 0x60a5fa, 0.3);
+            player.aimLine.moveTo(sx, sy);
+            player.aimLine.lineTo(
+                sx + Math.cos(data.aim_angle) * 50,
+                sy + Math.sin(data.aim_angle) * 50
+            );
+            player.aimLine.strokePath();
+        }
 
         // Update health bar
         this.drawHealthBar(player.healthBar, data.hp, data.max_hp, 40);
@@ -403,6 +468,7 @@ export class GameManager {
         const player = this.players[id];
         if (player) {
             player.sprite.destroy();
+            player.aimLine.destroy();
             player.nameText.destroy();
             player.healthBar.destroy();
             delete this.players[id];
@@ -418,43 +484,42 @@ export class GameManager {
         const x = this.scaleX(data.x);
         const y = this.scaleY(data.y);
 
-        // Visual sizes (screen pixels) - nice looking sizes
-        const zombieConfig = {
-            'normal': { color: 0x5a7247, size: 20 },
-            'fast': { color: 0x8a7a5a, size: 16 },
-            'tank': { color: 0x4a5a3a, size: 28 },
-            'boss': { color: 0x7c2a2a, size: 36 }
-        };
-        const config = zombieConfig[data.type] || zombieConfig.normal;
+        const sizeMap = { 'normal': 48, 'fast': 44, 'tank': 64, 'boss': 80 };
+        const displaySize = sizeMap[data.type] || 48;
 
-        // Create zombie container
-        const container = this.scene.add.container(x, y);
-        container.setDepth(5);
+        // Red ground indicator
+        const indicator = this.scene.add.circle(x, y, displaySize * 0.5, 0xff0000, 0.15);
+        indicator.setStrokeStyle(2, 0xff0000, 0.35);
+        indicator.setDepth(4);
 
-        // Body (circle)
-        const body = this.scene.add.circle(0, 0, config.size, config.color);
-        body.setStrokeStyle(3, 0x222222);
-        container.add(body);
-
-        // Eyes (red)
-        const leftEye = this.scene.add.circle(-config.size * 0.35, -config.size * 0.2, config.size * 0.18, 0xff0000);
-        const rightEye = this.scene.add.circle(config.size * 0.35, -config.size * 0.2, config.size * 0.18, 0xff0000);
-        container.add(leftEye);
-        container.add(rightEye);
+        // Create sprite based on type
+        let sprite;
+        if (data.type === 'tank') {
+            sprite = this.scene.add.image(x, y, 'zombie_tank_img');
+        } else if (data.type === 'boss') {
+            sprite = this.scene.add.image(x, y, 'zombie_boss_img');
+        } else {
+            sprite = this.scene.add.sprite(x, y, 'zombie_move');
+            sprite.play('zombie_move_anim');
+            if (data.type === 'fast') sprite.setTint(0xff6666);
+        }
+        sprite.setDisplaySize(displaySize, displaySize);
+        sprite.setDepth(5);
 
         // Health bar for tanks and bosses
         let healthBar = null;
         if (data.type === 'tank' || data.type === 'boss') {
             healthBar = this.scene.add.graphics().setDepth(6);
-            this.drawHealthBar(healthBar, data.hp, data.max_hp, 30, 0xff4444);
-            healthBar.setPosition(x - 15, y - config.size - 8);
+            this.drawHealthBar(healthBar, data.hp, data.max_hp, displaySize, 0xff4444);
+            healthBar.setPosition(x - displaySize / 2, y - displaySize / 2 - 8);
         }
 
         this.zombies[data.id] = {
-            sprite: container,
+            sprite,
+            indicator,
             healthBar,
             data,
-            size: config.size,
+            size: displaySize,
             targetX: x,
             targetY: y
         };
@@ -472,9 +537,32 @@ export class GameManager {
         zombie.targetX = this.scaleX(data.x);
         zombie.targetY = this.scaleY(data.y);
 
+        // Rotate zombie to face movement direction
+        if (zombie.data) {
+            const dx = this.scaleX(data.x) - this.scaleX(zombie.data.x);
+            const dy = this.scaleY(data.y) - this.scaleY(zombie.data.y);
+            const isMoving = Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5;
+            if (isMoving) {
+                zombie.sprite.setRotation(Math.atan2(dy, dx));
+            }
+
+            // Switch animation (only for animated zombies)
+            if (zombie.sprite.anims) {
+                if (isMoving) {
+                    if (zombie.sprite.anims.currentAnim?.key !== 'zombie_move_anim') {
+                        zombie.sprite.play('zombie_move_anim');
+                    }
+                } else {
+                    if (zombie.sprite.anims.currentAnim?.key !== 'zombie_idle_anim') {
+                        zombie.sprite.play('zombie_idle_anim');
+                    }
+                }
+            }
+        }
+
         // Update health bar
         if (zombie.healthBar) {
-            this.drawHealthBar(zombie.healthBar, data.hp, data.max_hp, 30, 0xff4444);
+            this.drawHealthBar(zombie.healthBar, data.hp, data.max_hp, zombie.size, 0xff4444);
         }
 
         zombie.data = data;
@@ -487,6 +575,7 @@ export class GameManager {
             this.createDeathEffect(zombie.sprite.x, zombie.sprite.y);
 
             zombie.sprite.destroy();
+            if (zombie.indicator) zombie.indicator.destroy();
             if (zombie.healthBar) zombie.healthBar.destroy();
             delete this.zombies[id];
         }
