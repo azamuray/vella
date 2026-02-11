@@ -43,12 +43,19 @@ export class GameManager {
         this._mouseX = 0;
         this._mouseY = 0;
         this._mouseDown = false;
+        this._mouseActive = false;
+        this._mouseLastMove = 0;
         this._onMouseMove = (e) => {
             this._mouseX = e.clientX;
             this._mouseY = e.clientY;
+            this._mouseLastMove = Date.now();
+            this._mouseActive = true;
         };
         this._onMouseDown = (e) => {
-            if (e.button === 0) this._mouseDown = true;
+            if (e.button === 0) {
+                this._mouseDown = true;
+                this._mouseActive = true;
+            }
         };
         this._onMouseUp = (e) => {
             if (e.button === 0) this._mouseDown = false;
@@ -273,40 +280,44 @@ export class GameManager {
             kbMoveY /= len;
         }
 
-        // Mouse aim: calculate angle from player to cursor
-        let mouseAimX = 0, mouseAimY = 0;
-        let hasMouseAim = false;
-        const me = this.players[this.myId];
-        if (me && this.scene) {
-            const canvas = this.game.canvas;
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const cx = (this._mouseX - rect.left) * scaleX;
-            const cy = (this._mouseY - rect.top) * scaleY;
-            const dx = cx - me.sprite.x;
-            const dy = cy - me.sprite.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            if (len > 5) {
-                mouseAimX = dx / len;
-                mouseAimY = dy / len;
-                hasMouseAim = true;
-            }
-        }
-
         // Keyboard aim: Arrow keys
-        const aimSpeed = 0.06;
+        const hasArrows = this.keys['ArrowLeft'] || this.keys['ArrowRight'] ||
+            this.keys['ArrowUp'] || this.keys['ArrowDown'];
+        if (hasArrows) this._mouseActive = false; // arrows override mouse
+
+        const aimSpeed = 0.15;
         if (this.keys['ArrowLeft']) this.aimAngle -= aimSpeed;
         if (this.keys['ArrowRight']) this.aimAngle += aimSpeed;
         if (this.keys['ArrowUp']) this.aimAngle = -Math.PI / 2;
         if (this.keys['ArrowDown']) this.aimAngle = Math.PI / 2;
 
-        const kbShooting = !!this.keys['Slash'] || !!this.keys['Space'];
-        const hasKeyboard = kbMoveX !== 0 || kbMoveY !== 0 || kbShooting ||
-            this.keys['ArrowLeft'] || this.keys['ArrowRight'] ||
-            this.keys['ArrowUp'] || this.keys['ArrowDown'];
+        // Mouse aim: only when mouse was recently active
+        let mouseAimX = 0, mouseAimY = 0;
+        let hasMouseAim = false;
+        if (this._mouseActive) {
+            const me = this.players[this.myId];
+            if (me && this.scene) {
+                const canvas = this.game.canvas;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const cx = (this._mouseX - rect.left) * scaleX;
+                const cy = (this._mouseY - rect.top) * scaleY;
+                const dx = cx - me.sprite.x;
+                const dy = cy - me.sprite.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                if (len > 5) {
+                    mouseAimX = dx / len;
+                    mouseAimY = dy / len;
+                    hasMouseAim = true;
+                }
+            }
+        }
 
-        // Combine inputs: mouse aim > keyboard aim > joystick
+        const kbShooting = !!this.keys['Slash'] || !!this.keys['Space'];
+        const hasKeyboard = kbMoveX !== 0 || kbMoveY !== 0 || kbShooting || hasArrows;
+
+        // Combine inputs
         const moveX = (kbMoveX !== 0 || kbMoveY !== 0) ? kbMoveX : joy.moveX;
         const moveY = (kbMoveX !== 0 || kbMoveY !== 0) ? kbMoveY : joy.moveY;
         const shooting = this._mouseDown || kbShooting || joy.shooting;
@@ -315,7 +326,7 @@ export class GameManager {
         if (hasMouseAim) {
             aimX = mouseAimX;
             aimY = mouseAimY;
-        } else if (hasKeyboard) {
+        } else if (hasArrows) {
             aimX = Math.cos(this.aimAngle);
             aimY = Math.sin(this.aimAngle);
         } else if (joy.aimX !== 0 || joy.aimY !== 0) {
