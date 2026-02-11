@@ -23,7 +23,7 @@ async def set_bot_commands():
     await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
 
     # Register private commands for admin
-    admin_id = int(os.getenv("ADMIN_TELEGRAM_ID", "0"))
+    admin_id = int(os.getenv("ADMIN_TELEGRAM_ID") or 0)
     if admin_id:
         try:
             admin_commands = [

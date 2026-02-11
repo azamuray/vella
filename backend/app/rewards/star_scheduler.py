@@ -25,7 +25,7 @@ STAR_RATES = {
 # Minimum stars to trigger a notification
 MIN_SEND_AMOUNT = 50
 
-ADMIN_TELEGRAM_ID = int(os.getenv("ADMIN_TELEGRAM_ID", "0"))
+ADMIN_TELEGRAM_ID = int(os.getenv("ADMIN_TELEGRAM_ID") or 0)
 
 
 class StarScheduler:

@@ -26,7 +26,7 @@ from ..game.rpg.clan_service import (
 )
 
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://vella.lovza.ru")
-ADMIN_TELEGRAM_ID = int(os.getenv("ADMIN_TELEGRAM_ID", "0"))
+ADMIN_TELEGRAM_ID = int(os.getenv("ADMIN_TELEGRAM_ID") or 0)
 
 group_router = Router()
 callback_router = Router()
