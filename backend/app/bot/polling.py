@@ -2,7 +2,7 @@
 Start bot polling as background asyncio task.
 """
 import logging
-from aiogram.types import BotCommand, BotCommandScopeAllGroupChats
+from aiogram.types import BotCommand, BotCommandScopeAllGroupChats, BotCommandScopeChat
 
 from .bot import bot, dp
 
@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 async def set_bot_commands():
-    """Установить команды бота для групповых чатов."""
+    """Установить команды бота для групповых чатов и админа."""
+    import os
+
     commands = [
         BotCommand(command="start", description="Создать базу (только админ)"),
         BotCommand(command="join", description="Вступить на базу"),
@@ -19,6 +21,17 @@ async def set_bot_commands():
         BotCommand(command="play", description="Открыть игру"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeAllGroupChats())
+
+    # Register private commands for admin
+    admin_id = int(os.getenv("ADMIN_TELEGRAM_ID", "0"))
+    if admin_id:
+        try:
+            admin_commands = [
+                BotCommand(command="stars", description="Топ-3 и балансы звёзд"),
+            ]
+            await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=admin_id))
+        except Exception as e:
+            logger.warning(f"[Bot] Could not set admin commands: {e}")
 
 
 async def start_polling():

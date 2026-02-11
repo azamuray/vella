@@ -24,6 +24,7 @@ from .game.rpg.world_engine import world_engine
 from .game.rpg.building_types import seed_building_types
 from .game.rpg.clan_routes import router as clan_router
 from .game.rpg.building_routes import router as building_router
+from .rewards.star_scheduler import star_scheduler
 
 # Telegram Bot Token for payments
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
@@ -49,12 +50,17 @@ async def lifespan(app: FastAPI):
 
     # Start Telegram bot polling as background task
     bot_task = None
+    bot_instance = None
     if BOT_TOKEN:
+        from .bot.bot import bot as bot_instance
         from .bot.polling import start_polling
         bot_task = asyncio.create_task(start_polling())
         print("[Bot] Polling task started")
     else:
         print("[Bot] No BOT_TOKEN, skipping bot startup")
+
+    # Start star reward scheduler (uses bot for admin notifications)
+    await star_scheduler.start(bot_instance)
 
     yield
 
@@ -69,6 +75,7 @@ async def lifespan(app: FastAPI):
             pass
         print("[Bot] Stopped")
 
+    await star_scheduler.stop()
     await world_engine.stop()
     await engine.stop()
     if redis_client:
@@ -543,6 +550,11 @@ async def websocket_endpoint(
                     )
                     player_mode = "world"
 
+                    # Get clan base info with online members
+                    from .game.rpg import world_db as _world_db
+                    online_ids = set(world_engine.players.keys())
+                    clan_base = await _world_db.get_player_clan_base(telegram_id, online_ids)
+
                     await websocket.send_json({
                         "type": "world_entered",
                         "x": world_player.x,
@@ -551,7 +563,10 @@ async def websocket_endpoint(
                         "max_hp": world_player.max_hp,
                         "inventory": world_player.to_inventory_state(),
                         "weapon": world_player.weapon_code,
+                        "clan_base": clan_base,
                     })
+                    # Now allow the game loop to send state/chunks to this player
+                    world_player.ws_ready = True
                     print(f"[World] Player {username} entered world at ({world_player.x:.0f}, {world_player.y:.0f})")
                 except Exception as e:
                     import traceback
@@ -583,6 +598,101 @@ async def websocket_endpoint(
                         "type": "world_medkit_used",
                         "hp": world_player.hp,
                         "meds": world_player.meds,
+                    })
+
+            elif msg_type == "deposit_to_base" and player_mode == "world" and world_player:
+                try:
+                    from .game.rpg import world_db as _world_db
+                    from .game.rpg.world_engine import SAFE_ZONE_RADIUS
+                    # Check player has something to deposit
+                    has_resources = (world_player.metal + world_player.wood +
+                                    world_player.food + world_player.ammo_inv + world_player.meds) > 0
+                    if not has_resources:
+                        await websocket.send_json({"type": "deposit_result", "success": False, "reason": "empty"})
+                    else:
+                        result = await _world_db.deposit_player_resources(
+                            telegram_id, world_player, SAFE_ZONE_RADIUS
+                        )
+                        if result:
+                            await websocket.send_json({
+                                "type": "deposit_result",
+                                "success": True,
+                                "deposited": result,
+                                "inventory": world_player.to_inventory_state(),
+                            })
+                        else:
+                            await websocket.send_json({"type": "deposit_result", "success": False, "reason": "not_at_base"})
+                except Exception as e:
+                    import traceback
+                    print(f"[World] Deposit error: {e}")
+                    traceback.print_exc()
+
+            elif msg_type == "demolish_building" and player_mode == "world" and world_player:
+                try:
+                    building_id = data.get("building_id")
+                    if building_id:
+                        from .game.rpg.building_routes import _demolish_building_from_world
+                        result = await _demolish_building_from_world(telegram_id, building_id)
+                        await websocket.send_json({"type": "building_demolished", **result})
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": "building_demolished", "success": False, "reason": str(e),
+                    })
+
+            elif msg_type == "move_building" and player_mode == "world" and world_player:
+                try:
+                    building_id = data.get("building_id")
+                    grid_x = data.get("grid_x")
+                    grid_y = data.get("grid_y")
+                    if building_id is not None and grid_x is not None and grid_y is not None:
+                        from .game.rpg.building_routes import _move_building_from_world
+                        result = await _move_building_from_world(
+                            telegram_id, building_id, grid_x, grid_y
+                        )
+                        await websocket.send_json({"type": "building_moved", **result})
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": "building_moved", "success": False, "reason": str(e),
+                    })
+
+            elif msg_type == "collect_building" and player_mode == "world" and world_player:
+                try:
+                    building_id = data.get("building_id")
+                    if building_id:
+                        from .game.rpg.building_routes import _collect_building_from_world
+                        result = await _collect_building_from_world(
+                            telegram_id, building_id, world_player
+                        )
+                        await websocket.send_json({
+                            "type": "building_collected",
+                            **result,
+                        })
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": "building_collected",
+                        "success": False,
+                        "reason": str(e),
+                    })
+
+            elif msg_type == "pickup_drop" and player_mode == "world" and world_player:
+                drop_id = data.get("drop_id")
+                if drop_id is not None:
+                    result = world_engine.pickup_ground_drop(telegram_id, drop_id)
+                    if result:
+                        await websocket.send_json({
+                            "type": "clothing_equipped",
+                            **result,
+                            "clothing": world_player.to_clothing_state(),
+                        })
+
+            elif msg_type == "unequip_clothing" and player_mode == "world" and world_player:
+                slot = data.get("slot")
+                if slot in ("head", "body", "legs"):
+                    result = world_player.unequip_clothing(slot)
+                    await websocket.send_json({
+                        "type": "clothing_unequipped",
+                        **result,
+                        "clothing": world_player.to_clothing_state(),
                     })
 
             elif msg_type == "leave_world" and player_mode == "world":
@@ -816,6 +926,32 @@ async def websocket_endpoint(
                     })
             else:
                 engine.room_manager.remove_room(room.room_code)
+
+
+@app.get("/api/leaderboard")
+async def get_leaderboard():
+    """Top-10 players by highest wave (tiebreak by total kills)"""
+    from .database import async_session
+    async with async_session() as db:
+        result = await db.execute(
+            select(Player)
+            .where(Player.highest_wave > 0)
+            .order_by(Player.highest_wave.desc(), Player.total_kills.desc())
+            .limit(10)
+        )
+        players = result.scalars().all()
+
+        return [
+            {
+                "position": i + 1,
+                "username": p.username,
+                "highest_wave": p.highest_wave,
+                "total_kills": p.total_kills,
+                "star_balance": round(p.star_balance or 0, 2),
+                "total_stars_earned": p.total_stars_earned or 0,
+            }
+            for i, p in enumerate(players)
+        ]
 
 
 @app.get("/api/rooms")

@@ -84,6 +84,9 @@ class WorldChunk:
         # Spawn points
         self.spawn_points = spawn_points_data
 
+        # Buildings (loaded from DB, sent to client)
+        self.buildings: list = []
+
         # Zombies in this chunk
         self.zombies: Dict[int, WorldZombieEntity] = {}
 
@@ -125,7 +128,16 @@ class WorldChunk:
             return self.get_tile_at_local(tx, ty)
         return None
 
-    def update(self, dt: float, players: list) -> List[dict]:
+    def _get_walls(self) -> list:
+        """Extract wall and gate buildings for zombie collision checks."""
+        walls = []
+        for b in self.buildings:
+            tc = b.get('type_code', '')
+            if tc.startswith('wall_') or tc.startswith('gate_'):
+                walls.append(b)
+        return walls
+
+    def update(self, dt: float, players: list, safe_zones: list = None) -> List[dict]:
         """Update chunk: spawn zombies, update existing ones. Returns events."""
         events = []
 
@@ -133,24 +145,47 @@ class WorldChunk:
         self.spawn_timer += dt
         if self.spawn_timer >= self.ZOMBIE_SPAWN_INTERVAL:
             self.spawn_timer = 0.0
-            self._try_spawn_zombies()
+            self._try_spawn_zombies(safe_zones)
+
+        # Get walls for collision
+        walls = self._get_walls()
 
         # Update zombies
         for zombie in list(self.zombies.values()):
-            attacked_player_id = zombie.update(dt, players)
-            if attacked_player_id:
+            result = zombie.update(dt, players, safe_zones, walls)
+
+            if result.get('attacked_player'):
                 events.append({
                     "type": "world_zombie_attack",
                     "zombie_id": zombie.id,
-                    "player_id": attacked_player_id,
+                    "player_id": result['attacked_player'],
                     "damage": zombie.damage,
+                })
+
+            for wd in result.get('wall_damage', []):
+                events.append({
+                    "type": "world_wall_damage",
+                    "wall_id": wd['wall_id'],
+                    "damage": wd['damage'],
                 })
 
         return events
 
-    def _try_spawn_zombies(self):
+    def _try_spawn_zombies(self, safe_zones: list = None):
         """Try to spawn zombies at spawn points"""
         for sp in self.spawn_points:
+            # Skip spawn points inside clan base safe zones
+            if safe_zones:
+                in_safe = False
+                for sx, sy in safe_zones:
+                    dx = sp["x"] - sx
+                    dy = sp["y"] - sy
+                    if dx * dx + dy * dy < 450 * 450:  # SAFE_ZONE_RADIUS squared
+                        in_safe = True
+                        break
+                if in_safe:
+                    continue
+
             # Count zombies near this spawn point
             nearby = sum(1 for z in self.zombies.values()
                         if abs(z.x - sp["x"]) < 200 and abs(z.y - sp["y"]) < 200)
@@ -187,4 +222,5 @@ class WorldChunk:
             "chunk_y": self.chunk_y,
             "terrain": self.terrain,
             "resources": [r.to_state() for r in self.resources.values()],
+            "buildings": self.buildings,
         }

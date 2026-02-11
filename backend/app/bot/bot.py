@@ -15,6 +15,7 @@ bot = Bot(
 dp = Dispatcher()
 
 # Register routers
-from .handlers import group_router, callback_router
+from .handlers import group_router, callback_router, private_router
 dp.include_router(group_router)
 dp.include_router(callback_router)
+dp.include_router(private_router)

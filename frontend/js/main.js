@@ -3,11 +3,11 @@
  * Initializes Telegram WebApp and game systems
  */
 
-import { WebSocketManager } from './network/WebSocketManager.js';
-import { GameManager } from './game.js';
-import { WorldGameManager } from './world.js';
-import { BaseManager } from './base.js';
-import { UIManager } from './ui/UIManager.js';
+import { WebSocketManager } from './network/WebSocketManager.js?v=28';
+import { GameManager } from './game.js?v=28';
+import { WorldGameManager } from './world.js?v=28';
+import { BaseManager } from './base.js?v=28';
+import { UIManager } from './ui/UIManager.js?v=28';
 
 // Telegram WebApp
 const tg = window.Telegram?.WebApp;
@@ -37,6 +37,18 @@ window.playSound = function(name, volume = 0.5) {
         audio.volume = volume;
         audio.play().catch(() => {}); // Ignore autoplay errors
     } catch (e) {}
+};
+
+// Global toast notification
+window.showToast = function(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    // Remove after animation ends (~2.8s)
+    setTimeout(() => toast.remove(), 3000);
 };
 
 // Initialize on DOM ready
@@ -180,10 +192,19 @@ function setupEventListeners() {
         depositResources();
     });
 
-    // Base back
+    // Base back — return to clan screen or world depending on where we came from
     document.getElementById('btn-base-back').addEventListener('click', () => {
         hideScreen('base-screen');
-        showScreen('clan-screen');
+        if (window.VELLA._baseOpenedFromWorld) {
+            window.VELLA._baseOpenedFromWorld = false;
+            // Return to world
+            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('world-hud').classList.remove('hidden');
+            document.getElementById('joystick-left').classList.remove('hidden');
+            document.getElementById('joystick-right').classList.remove('hidden');
+        } else {
+            showScreen('clan-screen');
+        }
     });
 
     // World buttons
@@ -197,6 +218,23 @@ function setupEventListeners() {
         if (window.VELLA.ws) {
             window.VELLA.ws.send({ type: 'collect_resource' });
         }
+    });
+
+    document.getElementById('btn-deposit-base').addEventListener('click', () => {
+        if (window.VELLA.ws) {
+            window.VELLA.ws.send({ type: 'deposit_to_base' });
+        }
+    });
+
+    // Base actions dropdown toggle
+    document.getElementById('base-actions-toggle').addEventListener('click', () => {
+        const dd = document.getElementById('base-actions-dropdown');
+        dd.classList.toggle('hidden');
+    });
+
+    // Build on base directly from world
+    document.getElementById('btn-world-build').addEventListener('click', () => {
+        openBaseBuildFromWorld();
     });
 
     document.getElementById('btn-world-pause').addEventListener('click', () => {
@@ -409,7 +447,7 @@ function setupRoomHandlers() {
     });
 
     window.VELLA.ws.on('error', (data) => {
-        alert(data.message || 'Ошибка');
+        window.showToast(data.message || 'Ошибка', 'error');
         hideScreen('lobby-screen');
         showScreen('menu-screen');
         if (window.VELLA.ws) {
@@ -818,7 +856,7 @@ async function buyWeapon(code) {
 async function buyWithStars(code) {
     const tg = window.Telegram?.WebApp;
     if (!tg) {
-        alert('Telegram WebApp недоступен');
+        window.showToast('Telegram WebApp недоступен', 'error');
         return;
     }
 
@@ -830,7 +868,7 @@ async function buyWithStars(code) {
 
         if (!response.ok) {
             const error = await response.json();
-            alert(error.detail || 'Ошибка создания счёта');
+            window.showToast(error.detail || 'Ошибка создания счёта', 'error');
             return;
         }
 
@@ -841,7 +879,7 @@ async function buyWithStars(code) {
             console.log('[Payment] Status:', status);
             if (status === 'paid') {
                 window.playSound('weapon_switch', 0.5);
-                alert('Покупка успешна! 🎉');
+                window.showToast('Покупка успешна!', 'success');
                 await loadPlayerData();
                 // Refresh shop (keep inGameShop state)
                 if (window.VELLA.inGameShop) {
@@ -850,13 +888,13 @@ async function buyWithStars(code) {
                     showShop();
                 }
             } else if (status === 'failed') {
-                alert('Оплата не прошла');
+                window.showToast('Оплата не прошла', 'error');
             }
             // 'cancelled' - user closed the dialog
         });
     } catch (error) {
         console.error('Failed to buy with Stars:', error);
-        alert('Ошибка обработки платежа');
+        window.showToast('Ошибка обработки платежа', 'error');
     }
 }
 
@@ -914,24 +952,53 @@ function setupWorldHandlers() {
         // Create world game manager
         window.VELLA.worldGame = new WorldGameManager();
 
+        // Pass clan base info
+        if (data.clan_base) {
+            window.VELLA.worldGame.setClanBase(data.clan_base);
+        }
+
         // Show game elements
         document.getElementById('game-container').classList.remove('hidden');
         document.getElementById('world-hud').classList.remove('hidden');
         document.getElementById('joystick-left').classList.remove('hidden');
         document.getElementById('joystick-right').classList.remove('hidden');
 
+        // Show "to base" button if in clan
+        const baseBtn = document.getElementById('btn-goto-base');
+        if (baseBtn) {
+            baseBtn.classList.toggle('hidden', !data.clan_base);
+        }
+
         window.VELLA.worldGame.start();
+
+        // Process any chunks that arrived before worldGame was created
+        if (window.VELLA._pendingWorldChunks) {
+            for (const chunk of window.VELLA._pendingWorldChunks) {
+                window.VELLA.worldGame.loadChunk(chunk);
+            }
+            window.VELLA._pendingWorldChunks = null;
+        }
     });
 
     window.VELLA.ws.on('world_chunk_load', (data) => {
         if (window.VELLA.worldGame) {
             window.VELLA.worldGame.loadChunk(data);
+        } else {
+            // Buffer chunks that arrive before worldGame is created
+            if (!window.VELLA._pendingWorldChunks) window.VELLA._pendingWorldChunks = [];
+            window.VELLA._pendingWorldChunks.push(data);
         }
     });
 
     window.VELLA.ws.on('world_chunk_unload', (data) => {
         if (window.VELLA.worldGame) {
             window.VELLA.worldGame.unloadChunk(data.chunk_x, data.chunk_y);
+        }
+    });
+
+    window.VELLA.ws.on('world_chunk_buildings_update', (data) => {
+        if (window.VELLA.worldGame) {
+            window.VELLA.worldGame.updateChunkBuildings(data);
         }
     });
 
@@ -951,8 +1018,43 @@ function setupWorldHandlers() {
         window.playSound('wave_complete', 0.3);
     });
 
+    window.VELLA.ws.on('deposit_result', (data) => {
+        if (data.success) {
+            const d = data.deposited;
+            const parts = [];
+            if (d.metal) parts.push(`${d.metal} металла`);
+            if (d.wood) parts.push(`${d.wood} дерева`);
+            if (d.food) parts.push(`${d.food} еды`);
+            if (d.ammo) parts.push(`${d.ammo} патронов`);
+            if (d.meds) parts.push(`${d.meds} аптечек`);
+            if (window.VELLA.worldGame) {
+                window.VELLA.worldGame.showFloatingText('Сдано: ' + parts.join(', '), 0x4ade80);
+            }
+            window.playSound('wave_complete', 0.3);
+            console.log('[World] Deposited:', d);
+        } else {
+            if (data.reason === 'empty') {
+                if (window.VELLA.worldGame) window.VELLA.worldGame.showFloatingText('Нечего сдавать', 0xff4444);
+            } else {
+                if (window.VELLA.worldGame) window.VELLA.worldGame.showFloatingText('Подойди к базе', 0xff4444);
+            }
+        }
+    });
+
     window.VELLA.ws.on('world_player_respawn', (data) => {
         console.log('[World] Respawned at', data.x, data.y);
+    });
+
+    window.VELLA.ws.on('clothing_equipped', (data) => {
+        if (data.name) {
+            window.showToast(`Экипировано: ${data.name}`, 'success');
+        }
+    });
+
+    window.VELLA.ws.on('clothing_unequipped', (data) => {
+        if (data.name) {
+            window.showToast(`Снято: ${data.name}`, 'info');
+        }
     });
 
     window.VELLA.ws.on('world_left', () => {
@@ -1043,7 +1145,7 @@ async function loadClanData() {
 async function createClan() {
     const name = document.getElementById('clan-name-input').value.trim();
     const chatId = document.getElementById('clan-chat-id-input').value.trim();
-    if (!name || !chatId) return alert('Fill in all fields');
+    if (!name || !chatId) return window.showToast('Заполни все поля', 'warning');
 
     try {
         const res = await fetch(
@@ -1054,7 +1156,7 @@ async function createClan() {
             await loadClanData();
         } else {
             const err = await res.json();
-            alert(err.detail || 'Error');
+            window.showToast(err.detail || 'Ошибка', 'error');
         }
     } catch (e) {
         console.error('Failed to create clan:', e);
@@ -1063,7 +1165,7 @@ async function createClan() {
 
 async function joinClan() {
     const clanId = document.getElementById('clan-join-id-input').value.trim();
-    if (!clanId) return alert('Enter clan ID');
+    if (!clanId) return window.showToast('Введи ID клана', 'warning');
 
     try {
         const res = await fetch(
@@ -1074,7 +1176,7 @@ async function joinClan() {
             await loadClanData();
         } else {
             const err = await res.json();
-            alert(err.detail || 'Error');
+            window.showToast(err.detail || 'Ошибка', 'error');
         }
     } catch (e) {
         console.error('Failed to join clan:', e);
@@ -1112,7 +1214,7 @@ async function depositResources() {
             await loadClanData();
         } else {
             const err = await res.json();
-            alert(err.detail || 'Error');
+            window.showToast(err.detail || 'Ошибка', 'error');
         }
     } catch (e) {
         console.error('Failed to deposit:', e);
@@ -1129,8 +1231,38 @@ async function showBaseScreen() {
         window.VELLA.baseManager = new BaseManager('base-canvas');
     }
 
+    // Load clan resources into base screen header
+    loadBaseResources();
+
     await window.VELLA.baseManager.loadBuildingTypes();
     await window.VELLA.baseManager.loadBuildings();
+}
+
+async function loadBaseResources() {
+    try {
+        const res = await fetch(`/api/clan?init_data=${encodeURIComponent(window.VELLA.initData)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.clan) return;
+        const r = data.clan.resources;
+        document.getElementById('base-res-metal').textContent = r.metal;
+        document.getElementById('base-res-wood').textContent = r.wood;
+        document.getElementById('base-res-food').textContent = r.food;
+        document.getElementById('base-res-ammo').textContent = r.ammo;
+        document.getElementById('base-res-meds').textContent = r.meds;
+    } catch (e) {
+        console.error('Failed to load base resources:', e);
+    }
+}
+
+// Open base screen directly from world (shortcut)
+function openBaseBuildFromWorld() {
+    window.VELLA._baseOpenedFromWorld = true;
+    document.getElementById('game-container').classList.add('hidden');
+    document.getElementById('world-hud').classList.add('hidden');
+    document.getElementById('joystick-left').classList.add('hidden');
+    document.getElementById('joystick-right').classList.add('hidden');
+    showBaseScreen();
 }
 
 // Helper functions

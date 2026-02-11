@@ -8,9 +8,15 @@ services:
       - DATABASE_URL=postgresql+asyncpg://vella:vella@db:5432/vella
       - REDIS_URL=redis://redis:6379
       - BOT_TOKEN=${BOT_TOKEN:-}
+      - ADMIN_TELEGRAM_ID=${ADMIN_TELEGRAM_ID:-}
       - DEV_MODE=${DEV_MODE:-true}
       - WEBAPP_URL=${WEBAPP_URL:-https://vella.lovza.ru}
       - PYTHONUNBUFFERED=1
+      - TELETHON_API_ID=${TELETHON_API_ID:-}
+      - TELETHON_API_HASH=${TELETHON_API_HASH:-}
+      - TELETHON_SESSION_PATH=/app/data/telethon_session
+    volumes:
+      - telethon_data:/app/data
     depends_on:
       db:
         condition: service_healthy
@@ -70,3 +76,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  telethon_data:

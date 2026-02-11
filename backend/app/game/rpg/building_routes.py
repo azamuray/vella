@@ -11,6 +11,7 @@ from ...database import get_db
 from ...models import Clan, ClanMember, Building, BuildingType
 from ...auth import validate_telegram_data
 from .base_grid import can_place_building, build_grid_from_buildings
+from .world_engine import world_engine
 
 router = APIRouter(prefix="/api/buildings", tags=["buildings"])
 
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/api/buildings", tags=["buildings"])
 def _get_user(init_data: str) -> dict:
     user = validate_telegram_data(init_data)
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid auth")
+        raise HTTPException(status_code=401, detail="Ошибка авторизации")
     return user
 
 
@@ -29,7 +30,7 @@ async def _get_clan_membership(telegram_id: int, db: AsyncSession):
     )
     membership = result.scalar_one_or_none()
     if not membership:
-        raise HTTPException(status_code=400, detail="Not in a clan")
+        raise HTTPException(status_code=400, detail="Ты не в клане")
     return membership
 
 
@@ -139,7 +140,7 @@ async def place_building(
     membership = await _get_clan_membership(user["id"], db)
 
     if membership.role not in ("leader", "officer"):
-        raise HTTPException(status_code=403, detail="Only leader/officer can build")
+        raise HTTPException(status_code=403, detail="Строить могут только лидер и офицер")
 
     # Get building type
     result = await db.execute(
@@ -147,7 +148,7 @@ async def place_building(
     )
     bt = result.scalar_one_or_none()
     if not bt:
-        raise HTTPException(status_code=404, detail="Building type not found")
+        raise HTTPException(status_code=404, detail="Тип здания не найден")
 
     # Get clan
     result = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
@@ -155,7 +156,7 @@ async def place_building(
 
     # Check resources
     if clan.metal < bt.cost_metal or clan.wood < bt.cost_wood or clan.food < bt.cost_food:
-        raise HTTPException(status_code=400, detail="Not enough resources")
+        raise HTTPException(status_code=400, detail="Недостаточно ресурсов")
 
     # Get existing buildings for grid check
     result = await db.execute(
@@ -176,7 +177,7 @@ async def place_building(
     grid = build_grid_from_buildings(existing)
 
     if not can_place_building(grid, grid_x, grid_y, bt.width, bt.height):
-        raise HTTPException(status_code=400, detail="Cannot place here — overlaps or out of bounds")
+        raise HTTPException(status_code=400, detail="Нельзя поставить — место занято или за пределами базы")
 
     # Deduct resources
     clan.metal -= bt.cost_metal
@@ -196,6 +197,9 @@ async def place_building(
     )
     db.add(building)
     await db.commit()
+
+    # Refresh buildings in the live world engine so they appear immediately
+    await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
 
     return {"success": True, "building_id": building.id}
 
@@ -217,22 +221,22 @@ async def collect_production(
     )
     building = result.scalar_one_or_none()
     if not building:
-        raise HTTPException(status_code=404, detail="Building not found")
+        raise HTTPException(status_code=404, detail="Здание не найдено")
 
     bt = building.building_type
     if not bt.produces_resource or bt.production_rate <= 0:
-        raise HTTPException(status_code=400, detail="Not a production building")
+        raise HTTPException(status_code=400, detail="Это не производственное здание")
 
     # Check if built
     if building.build_complete and building.build_complete > datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Still under construction")
+        raise HTTPException(status_code=400, detail="Ещё строится")
 
     # Calculate produced
     hours_since = (datetime.utcnow() - building.last_collected).total_seconds() / 3600
     produced = int(hours_since * bt.production_rate)
 
     if produced <= 0:
-        raise HTTPException(status_code=400, detail="Nothing to collect yet")
+        raise HTTPException(status_code=400, detail="Пока нечего собирать")
 
     # Add to clan
     result = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
@@ -264,7 +268,7 @@ async def demolish_building(
     membership = await _get_clan_membership(user["id"], db)
 
     if membership.role not in ("leader", "officer"):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="Нет прав (нужен лидер или офицер)")
 
     result = await db.execute(
         select(Building).where(
@@ -274,9 +278,220 @@ async def demolish_building(
     )
     building = result.scalar_one_or_none()
     if not building:
-        raise HTTPException(status_code=404, detail="Building not found")
+        raise HTTPException(status_code=404, detail="Здание не найдено")
+
+    # Get clan for base position before deleting
+    result = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
+    clan = result.scalar_one_or_none()
 
     await db.delete(building)
     await db.commit()
 
+    # Refresh buildings in the live world engine
+    if clan:
+        await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
+
     return {"success": True}
+
+
+@router.post("/move")
+async def move_building(
+    building_id: int,
+    grid_x: int,
+    grid_y: int,
+    init_data: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Move a building to a new grid position (leader/officer only)"""
+    user = _get_user(init_data)
+    membership = await _get_clan_membership(user["id"], db)
+
+    if membership.role not in ("leader", "officer"):
+        raise HTTPException(status_code=403, detail="Нет прав (нужен лидер или офицер)")
+
+    result = await db.execute(
+        select(Building)
+        .options(selectinload(Building.building_type))
+        .where(Building.id == building_id, Building.clan_id == membership.clan_id)
+    )
+    building = result.scalar_one_or_none()
+    if not building:
+        raise HTTPException(status_code=404, detail="Здание не найдено")
+
+    bt = building.building_type
+
+    # Get all other buildings for collision check
+    result = await db.execute(
+        select(Building)
+        .options(selectinload(Building.building_type))
+        .where(Building.clan_id == membership.clan_id, Building.id != building_id)
+    )
+    existing = []
+    for b in result.scalars().all():
+        existing.append({
+            "id": b.id,
+            "grid_x": b.grid_x,
+            "grid_y": b.grid_y,
+            "width": b.building_type.width,
+            "height": b.building_type.height,
+        })
+
+    grid = build_grid_from_buildings(existing)
+    if not can_place_building(grid, grid_x, grid_y, bt.width, bt.height):
+        raise HTTPException(status_code=400, detail="Нельзя поставить — место занято или за пределами базы")
+
+    building.grid_x = grid_x
+    building.grid_y = grid_y
+    await db.commit()
+
+    # Refresh world engine
+    result = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
+    clan = result.scalar_one_or_none()
+    if clan:
+        await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
+
+    return {"success": True}
+
+
+async def _collect_building_from_world(player_id: int, building_id: int, world_player) -> dict:
+    """Collect resources from a production building (called from WebSocket handler)."""
+    from ...database import async_session as _async_session
+
+    async with _async_session() as db:
+        # Verify player is in a clan
+        result = await db.execute(
+            select(ClanMember).where(ClanMember.player_id == player_id)
+        )
+        membership = result.scalar_one_or_none()
+        if not membership:
+            return {"success": False, "reason": "not_in_clan"}
+
+        # Get the building
+        result = await db.execute(
+            select(Building)
+            .options(selectinload(Building.building_type))
+            .where(Building.id == building_id, Building.clan_id == membership.clan_id)
+        )
+        building = result.scalar_one_or_none()
+        if not building:
+            return {"success": False, "reason": "not_found"}
+
+        bt = building.building_type
+        if not bt.produces_resource or bt.production_rate <= 0:
+            return {"success": False, "reason": "not_production"}
+
+        # Check if built
+        if building.build_complete and building.build_complete > datetime.utcnow():
+            return {"success": False, "reason": "not_built"}
+
+        # Calculate produced
+        hours_since = (datetime.utcnow() - building.last_collected).total_seconds() / 3600
+        produced = int(hours_since * bt.production_rate)
+        if produced <= 0:
+            return {"success": False, "reason": "nothing_ready"}
+
+        # Add to player inventory (not clan)
+        resource = bt.produces_resource
+        world_player.collect_resource(resource, produced)
+
+        building.last_collected = datetime.utcnow()
+        await db.commit()
+
+        return {
+            "success": True,
+            "resource": resource,
+            "amount": produced,
+            "building_name": bt.name,
+        }
+
+
+async def _move_building_from_world(player_id: int, building_id: int,
+                                     new_grid_x: int, new_grid_y: int) -> dict:
+    """Move a building to a new grid position (called from WebSocket handler)."""
+    from ...database import async_session as _async_session
+
+    async with _async_session() as db:
+        result = await db.execute(
+            select(ClanMember).where(ClanMember.player_id == player_id)
+        )
+        membership = result.scalar_one_or_none()
+        if not membership or membership.role not in ("leader", "officer"):
+            return {"success": False, "reason": "not_authorized"}
+
+        # Get the building
+        result = await db.execute(
+            select(Building)
+            .options(selectinload(Building.building_type))
+            .where(Building.id == building_id, Building.clan_id == membership.clan_id)
+        )
+        building = result.scalar_one_or_none()
+        if not building:
+            return {"success": False, "reason": "not_found"}
+
+        bt = building.building_type
+
+        # Get all other buildings for collision check
+        result = await db.execute(
+            select(Building)
+            .options(selectinload(Building.building_type))
+            .where(Building.clan_id == membership.clan_id, Building.id != building_id)
+        )
+        existing = []
+        for b in result.scalars().all():
+            existing.append({
+                "id": b.id,
+                "grid_x": b.grid_x,
+                "grid_y": b.grid_y,
+                "width": b.building_type.width,
+                "height": b.building_type.height,
+            })
+
+        grid = build_grid_from_buildings(existing)
+        if not can_place_building(grid, new_grid_x, new_grid_y, bt.width, bt.height):
+            return {"success": False, "reason": "cannot_place"}
+
+        building.grid_x = new_grid_x
+        building.grid_y = new_grid_y
+        await db.commit()
+
+        # Refresh world engine
+        result = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
+        clan = result.scalar_one_or_none()
+        if clan:
+            await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
+
+        return {"success": True}
+
+
+async def _demolish_building_from_world(player_id: int, building_id: int) -> dict:
+    """Demolish a building (called from WebSocket handler)."""
+    from ...database import async_session as _async_session
+
+    async with _async_session() as db:
+        result = await db.execute(
+            select(ClanMember).where(ClanMember.player_id == player_id)
+        )
+        membership = result.scalar_one_or_none()
+        if not membership or membership.role not in ("leader", "officer"):
+            return {"success": False, "reason": "not_authorized"}
+
+        result = await db.execute(
+            select(Building).where(
+                Building.id == building_id,
+                Building.clan_id == membership.clan_id
+            )
+        )
+        building = result.scalar_one_or_none()
+        if not building:
+            return {"success": False, "reason": "not_found"}
+
+        result = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
+        clan = result.scalar_one_or_none()
+
+        await db.delete(building)
+        await db.commit()
+
+        if clan:
+            await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
+
+        return {"success": True}

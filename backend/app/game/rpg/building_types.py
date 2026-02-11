@@ -44,6 +44,25 @@ BUILDING_TYPES = [
         "build_time": 300
     },
 
+    {
+        "code": "gate_wood",
+        "name": "Деревянные ворота",
+        "category": "defense",
+        "width": 1, "height": 1,
+        "max_hp": 80,
+        "cost_wood": 30,
+        "build_time": 45
+    },
+    {
+        "code": "gate_metal",
+        "name": "Металлические ворота",
+        "category": "defense",
+        "width": 1, "height": 1,
+        "max_hp": 250,
+        "cost_metal": 40, "cost_wood": 15,
+        "build_time": 90
+    },
+
     # Производство
     {
         "code": "mine",

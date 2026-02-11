@@ -10,7 +10,10 @@ from aiogram.types import (
 )
 from aiogram.filters import Command
 from aiogram.enums import ChatType
+from sqlalchemy import select, desc
 
+from ..database import async_session
+from ..models import Player, StarRewardLog
 from ..game.rpg.clan_service import (
     create_clan_from_group,
     create_join_request,
@@ -23,9 +26,11 @@ from ..game.rpg.clan_service import (
 )
 
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://vella.lovza.ru")
+ADMIN_TELEGRAM_ID = int(os.getenv("ADMIN_TELEGRAM_ID", "0"))
 
 group_router = Router()
 callback_router = Router()
+private_router = Router()
 
 
 # ========== Helpers ==========
@@ -248,3 +253,109 @@ async def cmd_play(message: Message):
         "Нажми кнопку чтобы открыть игру!",
         reply_markup=keyboard,
     )
+
+
+# ========== /stars — Топ-3 и балансы (только админ, в ЛС) ==========
+
+@private_router.message(Command("stars"), F.chat.type == ChatType.PRIVATE)
+async def cmd_stars(message: Message):
+    if not ADMIN_TELEGRAM_ID or message.from_user.id != ADMIN_TELEGRAM_ID:
+        return
+
+    async with async_session() as db:
+        result = await db.execute(
+            select(Player)
+            .where(Player.highest_wave > 0)
+            .order_by(desc(Player.highest_wave), desc(Player.total_kills))
+            .limit(3)
+        )
+        top_players = result.scalars().all()
+
+    if not top_players:
+        await message.reply("Пока нет игроков в лидерборде.")
+        return
+
+    medals = ["🥇", "🥈", "🥉"]
+    lines = []
+    for i, p in enumerate(top_players):
+        name = f"@{p.username}" if p.username else f"id:{p.telegram_id}"
+        link = f'<a href="tg://user?id={p.telegram_id}">{name}</a>'
+        balance = round(p.star_balance or 0, 2)
+        earned = p.total_stars_earned or 0
+        lines.append(
+            f"{medals[i]} {link}\n"
+            f"   Волна: <b>{p.highest_wave}</b> | Kills: <b>{p.total_kills}</b>\n"
+            f"   Баланс: <b>{balance}</b> ⭐ | Всего отправлено: <b>{earned}</b> ⭐"
+        )
+
+    await message.reply(
+        "⭐ <b>Топ-3 игроков (награды за звёзды)</b>\n\n"
+        + "\n\n".join(lines)
+    )
+
+
+# ========== Callback: Подтверждение отправки звёзд ==========
+
+@callback_router.callback_query(F.data.startswith("stars_confirm:"))
+async def cb_stars_confirm(callback: CallbackQuery):
+    if not ADMIN_TELEGRAM_ID or callback.from_user.id != ADMIN_TELEGRAM_ID:
+        await callback.answer("Только админ может подтверждать!", show_alert=True)
+        return
+
+    parts = callback.data.split(":")
+    log_id = int(parts[1])
+    player_id = int(parts[2])
+    amount = int(parts[3])
+
+    async with async_session() as db:
+        # Update log status
+        result = await db.execute(
+            select(StarRewardLog).where(StarRewardLog.id == log_id)
+        )
+        log = result.scalar_one_or_none()
+
+        if not log:
+            await callback.answer("Запись не найдена!", show_alert=True)
+            return
+
+        if log.status == "sent":
+            await callback.answer("Уже подтверждено!", show_alert=True)
+            return
+
+        log.status = "sent"
+
+        # Update player balance
+        result = await db.execute(
+            select(Player).where(Player.telegram_id == player_id)
+        )
+        player = result.scalar_one_or_none()
+
+        if player:
+            player.star_balance = max(0, (player.star_balance or 0) - amount)
+            player.total_stars_earned = (player.total_stars_earned or 0) + amount
+
+        await db.commit()
+
+    # Update the button text in the message
+    name = f"@{player.username}" if player and player.username else f"id:{player_id}"
+
+    # Rebuild keyboard: mark this button as confirmed
+    if callback.message and callback.message.reply_markup:
+        new_buttons = []
+        for row in callback.message.reply_markup.inline_keyboard:
+            new_row = []
+            for btn in row:
+                if btn.callback_data == callback.data:
+                    new_row.append(InlineKeyboardButton(
+                        text=f"✅ {name} — {amount}⭐ (отправлено)",
+                        callback_data=f"stars_done:{log_id}",
+                    ))
+                else:
+                    new_row.append(btn)
+            new_buttons.append(new_row)
+
+        await callback.message.edit_reply_markup(
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=new_buttons)
+        )
+
+    await callback.answer(f"Отправка {amount}⭐ для {name} подтверждена!")

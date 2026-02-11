@@ -201,6 +201,13 @@
                 <h2>База клана</h2>
                 <div></div>
             </div>
+            <div class="base-resources-bar" id="base-resources-bar">
+                <span>⛏️ <span id="base-res-metal">0</span></span>
+                <span>🪵 <span id="base-res-wood">0</span></span>
+                <span>🍖 <span id="base-res-food">0</span></span>
+                <span>🔫 <span id="base-res-ammo">0</span></span>
+                <span>💊 <span id="base-res-meds">0</span></span>
+            </div>
             <canvas id="base-canvas"></canvas>
             <div id="build-menu" class="build-menu"></div>
         </div>
@@ -264,6 +271,16 @@
                 <span>🔫 <span id="world-ammo">0</span></span>
                 <span>💊 <span id="world-meds">0</span></span>
             </div>
+            <button id="btn-goto-base" class="btn-base hidden">🏠 <span id="base-distance">--</span></button>
+        </div>
+        <div class="world-minimap-wrap">
+            <canvas id="world-minimap" width="120" height="120"></canvas>
+        </div>
+        <div id="equipment-hud" style="display:none;">
+            <div class="eq-slot" data-slot="head">--</div>
+            <div class="eq-slot" data-slot="body">--</div>
+            <div class="eq-slot" data-slot="legs">--</div>
+            <div class="armor-value">0%</div>
         </div>
         <div class="world-hud-bottom">
             <div class="health-bar">
@@ -273,6 +290,29 @@
             <span id="world-weapon-ammo" class="world-ammo-text">17/17</span>
             <button class="btn btn-small btn-medkit" id="btn-use-medkit">💊 Аптечка</button>
             <button class="btn btn-small btn-collect" id="btn-collect-resource">📦 Собрать</button>
+            <div class="base-actions-wrap hidden" id="base-actions-wrap">
+                <button class="base-actions-toggle" id="base-actions-toggle">🏠 База ▲</button>
+                <div class="base-actions-dropdown hidden" id="base-actions-dropdown">
+                    <button class="btn btn-small" id="btn-deposit-base" style="background:#1a3a5f;">🏠 Сдать</button>
+                    <button class="btn btn-small" id="btn-world-build" style="background:#2d5a1e;">🏗️ Строить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Building interaction panel -->
+    <div id="building-panel" class="modal hidden">
+        <div class="modal-content" style="max-width: 280px;">
+            <h3 id="bp-title" style="margin: 0 0 8px; font-size: 14px;"></h3>
+            <p id="bp-info" style="font-size: 12px; color: #aaa; margin: 0 0 12px;"></p>
+            <div id="bp-collect-row" class="hidden" style="margin-bottom: 8px;">
+                <button class="btn btn-small" id="bp-collect" style="background: #2d5a1e; width: 100%;">📦 Собрать ресурсы (<span id="bp-collect-amount">0</span>)</button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-small" id="bp-move" style="background: #1a3a5f; flex: 1;">↕️ Переместить</button>
+                <button class="btn btn-small" id="bp-demolish" style="background: #8b0000; flex: 1;">🗑 Снести</button>
+            </div>
+            <button class="btn btn-small" id="bp-close" style="margin-top: 8px; width: 100%; background: #333;">Закрыть</button>
         </div>
     </div>
 
@@ -340,6 +380,9 @@
         </div>
     </div>
 
-    <script type="module" src="/js/main.js?v=23"></script>
+    <!-- Toast notifications -->
+    <div id="toast-container"></div>
+
+    <script type="module" src="/js/main.js?v=28"></script>
 </body>
 </html>

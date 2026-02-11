@@ -997,8 +997,47 @@ html, body {
     color: #000;
 }
 
+.btn-deposit {
+    background: #4488ff;
+    color: #fff;
+}
+
 #world-hud .health-bar {
     width: 120px;
+}
+
+/* ============== MINIMAP ============== */
+.world-minimap-wrap {
+    position: absolute;
+    top: 44px;
+    right: 10px;
+    pointer-events: auto;
+    z-index: 80;
+}
+
+#world-minimap {
+    display: block;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(10, 10, 15, 0.85);
+}
+
+/* ============== GO TO BASE BUTTON ============== */
+.btn-base {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 6px;
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    cursor: pointer;
+    pointer-events: auto;
+    white-space: nowrap;
+}
+
+.btn-base:active {
+    background: rgba(255, 215, 0, 0.3);
 }
 
 /* ============== CLAN SCREEN ============== */
@@ -1140,4 +1179,160 @@ html, body {
     display: block;
     font-size: 0.65rem;
     color: var(--text-dim);
+}
+
+/* ============== TOAST NOTIFICATIONS ============== */
+#toast-container {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+    max-width: 90vw;
+}
+
+.toast {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    animation: toastIn 0.25s ease-out, toastOut 0.3s ease-in 2.5s forwards;
+    pointer-events: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    white-space: nowrap;
+}
+
+.toast.error   { background: rgba(239, 68, 68, 0.95); }
+.toast.success { background: rgba(74, 222, 128, 0.9); color: #000; }
+.toast.info    { background: rgba(96, 165, 250, 0.9); }
+.toast.warning { background: rgba(251, 191, 36, 0.9); color: #000; }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+    from { opacity: 1; }
+    to   { opacity: 0; transform: translateY(-10px); }
+}
+
+/* ============== BASE RESOURCES BAR ============== */
+.base-resources-bar {
+    display: flex;
+    gap: 10px;
+    background: var(--bg-card);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: 640px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.base-resources-bar span {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* ============== BASE ACTION DROPDOWN ============== */
+.base-actions-wrap {
+    position: relative;
+    pointer-events: auto;
+}
+
+.base-actions-toggle {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #2d5a1e;
+    color: #fff;
+}
+
+.base-actions-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: rgba(20, 20, 30, 0.95);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 6px;
+    min-width: 120px;
+}
+
+.base-actions-dropdown .btn-small {
+    width: 100%;
+    text-align: left;
+}
+
+/* ============== EQUIPMENT HUD ============== */
+#equipment-hud {
+    position: absolute;
+    top: 170px;
+    right: 8px;
+    background: rgba(10, 10, 20, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    color: #ccc;
+    pointer-events: auto;
+    z-index: 50;
+    min-width: 80px;
+}
+.eq-slot {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.eq-slot:last-of-type {
+    border-bottom: none;
+}
+.eq-name {
+    color: #ddd;
+}
+.eq-dur {
+    font-weight: 700;
+}
+.armor-value {
+    text-align: center;
+    color: #60a5fa;
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ============== DRAG GHOST ============== */
+.drag-ghost {
+    position: fixed;
+    padding: 6px 14px;
+    background: rgba(74, 222, 128, 0.9);
+    color: #000;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 8px;
+    pointer-events: none;
+    transform: translate(-50%, -120%);
+    z-index: 10000;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }

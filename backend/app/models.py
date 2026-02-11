@@ -172,6 +172,7 @@ class PlayerInventory(Base):
     # Equipment slots
     equipped_weapon = Column(String(32), default="glock_17")
     equipped_armor = Column(String(32), nullable=True)
+    equipped_clothing = Column(JSON, nullable=True, default=None)
 
     # Relationships
     player = relationship("Player", back_populates="inventory")
@@ -305,6 +306,10 @@ class Player(Base):
     total_deaths = Column(Integer, default=0)
     raids_participated = Column(Integer, default=0)
 
+    # Star rewards
+    star_balance = Column(Float, default=0.0)
+    total_stars_earned = Column(Integer, default=0)
+
     # Timestamps
     created_at = Column(DateTime, server_default=func.now())
     last_online = Column(DateTime, server_default=func.now(), onupdate=func.now())
@@ -359,6 +364,17 @@ class PlayerWeapon(Base):
     __table_args__ = (
         Index('idx_player_weapon', 'player_id', 'weapon_id', unique=True),
     )
+
+
+class StarRewardLog(Base):
+    __tablename__ = "star_reward_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    player_id = Column(BigInteger, ForeignKey("players.telegram_id", ondelete="CASCADE"))
+    amount = Column(Integer, nullable=False)
+    status = Column(String(16), nullable=False)  # "sent", "failed"
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
 
 
 class GameSession(Base):

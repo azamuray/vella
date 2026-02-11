@@ -9,6 +9,7 @@ from ..weapons import get_weapon, get_starter_weapon
 from ..collision import clamp, normalize
 
 from .map_generator import CHUNK_SIZE, TILE_SIZE, TILES_PER_CHUNK, TILE_WATER, TILE_ROCK
+from .clothing import CLOTHING_ITEMS
 
 
 class WorldPlayer:
@@ -32,6 +33,9 @@ class WorldPlayer:
         self.is_dead = False
         self.death_time = 0.0
 
+        # Ready flag — skip state broadcasts until client received world_entered
+        self.ws_ready = False
+
         # Weapon (same system as rooms)
         self.weapon_code = get_starter_weapon()
         self.ammo = 0
@@ -54,6 +58,10 @@ class WorldPlayer:
         self.ammo_inv = 30
         self.meds = 1
 
+        # Clothing (armor)
+        self.clothing = {"head": None, "body": None, "legs": None}
+        self._broken_items: list = []
+
         # Stats
         self.kills = 0
         self.coins_earned = 0
@@ -64,12 +72,19 @@ class WorldPlayer:
         # Track which chunks are loaded on client
         self.loaded_chunks: set = set()
 
-        # Initialize ammo
-        self._refill_ammo()
+        # NOTE: ammo starts at 0; add_player() loads ammo_inv from DB then calls _refill_ammo()
+        self.ammo = 0
 
     def _refill_ammo(self):
         weapon = get_weapon(self.weapon_code)
-        self.ammo = weapon["magazine_size"]
+        needed = weapon["magazine_size"] - self.ammo
+        take = min(needed, self.ammo_inv)
+        if take <= 0:
+            self.reloading = False
+            self.reload_timer = 0.0
+            return
+        self.ammo_inv -= take
+        self.ammo += take
 
     @property
     def aim_angle(self) -> float:
@@ -110,28 +125,40 @@ class WorldPlayer:
         self.shooting = shooting
         self.wants_reload = reload
 
-    def update(self, dt: float, get_tile_at=None) -> bool:
+    def update(self, dt: float, get_tile_at=None, check_building=None) -> bool:
         """
         Update player. Returns True if player can shoot this tick.
         get_tile_at: callback(world_x, world_y) -> tile_type or None
+        check_building: callback(new_x, new_y) -> True if blocked by building
         """
         if self.is_dead:
             return False
 
-        # Movement with terrain collision
+        # Movement with terrain + building collision (axis-separated for wall sliding)
         if abs(self.move_x) > 0.01 or abs(self.move_y) > 0.01:
             nx, ny = normalize(self.move_x, self.move_y)
             new_x = self.x + nx * self.SPEED * dt
             new_y = self.y + ny * self.SPEED * dt
 
-            # Check terrain collision
-            if get_tile_at:
-                tile = get_tile_at(new_x, new_y)
-                if tile not in (TILE_WATER, TILE_ROCK):
-                    self.x = new_x
-                    self.y = new_y
-            else:
+            # If player is already inside a building (legacy position), skip building check
+            already_in_building = check_building and check_building(self.x, self.y)
+
+            def _can_move(x, y):
+                if get_tile_at:
+                    tile = get_tile_at(x, y)
+                    if tile in (TILE_WATER, TILE_ROCK):
+                        return False
+                if check_building and not already_in_building and check_building(x, y):
+                    return False
+                return True
+
+            # Try both axes, then each separately (allows wall sliding)
+            if _can_move(new_x, new_y):
                 self.x = new_x
+                self.y = new_y
+            elif _can_move(new_x, self.y):
+                self.x = new_x
+            elif _can_move(self.x, new_y):
                 self.y = new_y
 
         # Fire cooldown
@@ -145,7 +172,7 @@ class WorldPlayer:
                 self._refill_ammo()
                 self.reloading = False
                 self.reload_timer = 0.0
-        elif self.wants_reload and self.ammo < self.weapon["magazine_size"]:
+        elif self.wants_reload and self.ammo < self.weapon["magazine_size"] and self.ammo_inv > 0:
             self._start_reload()
 
         # Shooting
@@ -159,7 +186,7 @@ class WorldPlayer:
         if can_shoot:
             self.ammo -= 1
             self.fire_cooldown = 1.0 / self.weapon["fire_rate"]
-            if self.ammo == 0:
+            if self.ammo == 0 and self.ammo_inv > 0:
                 self._start_reload()
 
         return can_shoot
@@ -172,7 +199,18 @@ class WorldPlayer:
     def take_damage(self, damage: int) -> bool:
         if self.is_dead:
             return False
-        self.hp -= damage
+        # Apply armor reduction
+        armor = self.get_total_armor()
+        reduced = max(1, int(damage * (1.0 - armor)))
+        # Degrade durability on all worn items
+        for slot in list(self.clothing.keys()):
+            item = self.clothing[slot]
+            if item:
+                item["durability"] -= max(1, damage // 3)
+                if item["durability"] <= 0:
+                    self._broken_items.append(item["code"])
+                    self.clothing[slot] = None
+        self.hp -= reduced
         if self.hp <= 0:
             self.hp = 0
             self.is_dead = True
@@ -226,6 +264,49 @@ class WorldPlayer:
         self.kills += 1
         self.coins_earned += coins
 
+    def get_total_armor(self) -> float:
+        return sum(
+            CLOTHING_ITEMS[item["code"]]["armor"]
+            for item in self.clothing.values() if item
+        )
+
+    def equip_clothing(self, code: str) -> dict:
+        info = CLOTHING_ITEMS.get(code)
+        if not info:
+            return {"equipped": None}
+        slot = info["slot"]
+        replaced = None
+        old = self.clothing.get(slot)
+        if old:
+            replaced = old["code"]
+        self.clothing[slot] = {"code": code, "durability": info["max_durability"]}
+        return {"equipped": code, "slot": slot, "replaced": replaced,
+                "name": info["name"]}
+
+    def unequip_clothing(self, slot: str) -> dict:
+        item = self.clothing.get(slot)
+        if not item:
+            return {"unequipped": None, "slot": slot}
+        code = item["code"]
+        name = CLOTHING_ITEMS[code]["name"]
+        self.clothing[slot] = None
+        return {"unequipped": code, "slot": slot, "name": name}
+
+    def to_clothing_state(self) -> Dict[str, Any]:
+        result = {}
+        for slot, item in self.clothing.items():
+            if item:
+                info = CLOTHING_ITEMS[item["code"]]
+                result[slot] = {
+                    "code": item["code"],
+                    "durability": item["durability"],
+                    "max_durability": info["max_durability"],
+                    "name": info["name"],
+                }
+            else:
+                result[slot] = None
+        return result
+
     def to_state(self) -> Dict[str, Any]:
         return {
             "id": self.id,
@@ -237,10 +318,12 @@ class WorldPlayer:
             "weapon": self.weapon_code,
             "ammo": self.ammo,
             "max_ammo": self.weapon["magazine_size"],
+            "ammo_reserve": self.ammo_inv,
             "reloading": self.reloading,
             "reload_progress": 1.0 - (self.reload_timer / self.weapon["reload_time"]) if self.reloading else 1.0,
             "aim_angle": round(self.aim_angle, 2),
             "is_dead": self.is_dead,
+            "armor": round(self.get_total_armor(), 2),
         }
 
     def to_inventory_state(self) -> Dict[str, Any]:

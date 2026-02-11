@@ -146,6 +146,24 @@ class MapGenerator:
                 "respawn_time": 3600  # 1 hour
             })
 
+        # Генерация мусорных корзин (содержимое неизвестно до сбора)
+        num_trash = random.randint(2, 5)
+        for _ in range(num_trash):
+            tx = random.randint(1, TILES_PER_CHUNK - 2)
+            ty = random.randint(1, TILES_PER_CHUNK - 2)
+            tile = terrain[ty][tx]
+            if tile in (TILE_WATER, TILE_ROCK):
+                continue
+            world_x = chunk_x * CHUNK_SIZE + tx * TILE_SIZE + TILE_SIZE // 2
+            world_y = chunk_y * CHUNK_SIZE + ty * TILE_SIZE + TILE_SIZE // 2
+            resources.append({
+                "x": world_x,
+                "y": world_y,
+                "resource_type": "trash",
+                "amount": 1,
+                "respawn_time": 300,  # 5 minutes
+            })
+
         # Генерация точек спавна зомби
         spawn_points = []
         num_spawns = random.randint(1, 3)

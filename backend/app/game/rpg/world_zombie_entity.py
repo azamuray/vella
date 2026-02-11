@@ -37,11 +37,20 @@ class WorldZombieEntity:
         self.target_id: Optional[int] = None
         self.attack_cooldown = 0.0
 
-    def update(self, dt: float, players: List) -> Optional[int]:
+    # Damage per second a single zombie deals to a wall
+    WALL_DPS = 100.0 / 3600.0  # wooden wall (100 HP) breaks in 1 hour per zombie
+
+    def update(self, dt: float, players: List, safe_zones: list = None,
+               walls: list = None) -> dict:
         """
-        Update zombie AI. Returns player ID if attacking.
+        Update zombie AI. Returns dict with:
+          - 'attacked_player': player_id or None
+          - 'wall_damage': list of {'wall_id': id, 'damage': float} or []
         players: list of WorldPlayer
+        walls: list of {'id', 'x', 'y', 'width', 'height', 'type_code'}
         """
+        result = {'attacked_player': None, 'wall_damage': []}
+
         if self.attack_cooldown > 0:
             self.attack_cooldown -= dt
 
@@ -58,7 +67,7 @@ class WorldZombieEntity:
                 nearest_player = player
 
         if not nearest_player:
-            return None
+            return result
 
         self.target_id = nearest_player.id
 
@@ -67,7 +76,7 @@ class WorldZombieEntity:
         if nearest_dist < attack_range:
             if self.attack_cooldown <= 0:
                 self.attack_cooldown = 1.0
-                return nearest_player.id
+                result['attacked_player'] = nearest_player.id
         else:
             # Move towards player (only if within aggro range)
             aggro_range = 600  # pixels
@@ -75,10 +84,40 @@ class WorldZombieEntity:
                 dx = nearest_player.x - self.x
                 dy = nearest_player.y - self.y
                 nx, ny = normalize(dx, dy)
-                self.x += nx * self.speed * dt
-                self.y += ny * self.speed * dt
+                new_x = self.x + nx * self.speed * dt
+                new_y = self.y + ny * self.speed * dt
 
-        return None
+                # Don't enter clan base safe zones
+                if safe_zones:
+                    for sx, sy in safe_zones:
+                        ddx = new_x - sx
+                        ddy = new_y - sy
+                        if ddx * ddx + ddy * ddy < 450 * 450:
+                            return result
+
+                # Check wall collisions
+                blocked = False
+                if walls:
+                    for wall in walls:
+                        wx, wy = wall['x'], wall['y']
+                        ww, wh = wall['width'], wall['height']
+                        # Check if new position overlaps with wall rect (with zombie size margin)
+                        if (new_x + self.size > wx and new_x - self.size < wx + ww and
+                                new_y + self.size > wy and new_y - self.size < wy + wh):
+                            blocked = True
+                            # Attack the wall
+                            dmg = self.WALL_DPS * dt
+                            result['wall_damage'].append({
+                                'wall_id': wall['id'],
+                                'damage': dmg,
+                            })
+                            break
+
+                if not blocked:
+                    self.x = new_x
+                    self.y = new_y
+
+        return result
 
     def take_damage(self, damage: int) -> bool:
         self.hp -= damage
