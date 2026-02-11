@@ -39,30 +39,31 @@ export class GameManager {
         window.addEventListener('keyup', this._onKeyUp);
         this.aimAngle = -Math.PI / 2; // default: up
 
-        // Mouse state
+        // Mouse state (pointer events to filter out touch)
         this._mouseX = 0;
         this._mouseY = 0;
         this._mouseDown = false;
         this._mouseActive = false;
-        this._mouseLastMove = 0;
-        this._onMouseMove = (e) => {
+        this._onPointerMove = (e) => {
+            if (e.pointerType !== 'mouse') return;
             this._mouseX = e.clientX;
             this._mouseY = e.clientY;
-            this._mouseLastMove = Date.now();
             this._mouseActive = true;
         };
-        this._onMouseDown = (e) => {
+        this._onPointerDown = (e) => {
+            if (e.pointerType !== 'mouse') return;
             if (e.button === 0) {
                 this._mouseDown = true;
                 this._mouseActive = true;
             }
         };
-        this._onMouseUp = (e) => {
+        this._onPointerUp = (e) => {
+            if (e.pointerType !== 'mouse') return;
             if (e.button === 0) this._mouseDown = false;
         };
-        window.addEventListener('mousemove', this._onMouseMove);
-        window.addEventListener('mousedown', this._onMouseDown);
-        window.addEventListener('mouseup', this._onMouseUp);
+        window.addEventListener('pointermove', this._onPointerMove);
+        window.addEventListener('pointerdown', this._onPointerDown);
+        window.addEventListener('pointerup', this._onPointerUp);
 
         // Asset loading state
         this.assetsLoaded = false;
@@ -865,9 +866,9 @@ export class GameManager {
     destroy() {
         window.removeEventListener('keydown', this._onKeyDown);
         window.removeEventListener('keyup', this._onKeyUp);
-        window.removeEventListener('mousemove', this._onMouseMove);
-        window.removeEventListener('mousedown', this._onMouseDown);
-        window.removeEventListener('mouseup', this._onMouseUp);
+        window.removeEventListener('pointermove', this._onPointerMove);
+        window.removeEventListener('pointerdown', this._onPointerDown);
+        window.removeEventListener('pointerup', this._onPointerUp);
 
         if (this.joystick) {
             this.joystick.destroy();
