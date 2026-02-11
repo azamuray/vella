@@ -24,6 +24,39 @@ export class GameManager {
         // Input state
         this.inputSeq = 0;
 
+        // Keyboard state
+        this.keys = {};
+        this._onKeyDown = (e) => {
+            this.keys[e.code] = true;
+            if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Slash'].includes(e.code)) {
+                e.preventDefault();
+            }
+        };
+        this._onKeyUp = (e) => {
+            this.keys[e.code] = false;
+        };
+        window.addEventListener('keydown', this._onKeyDown);
+        window.addEventListener('keyup', this._onKeyUp);
+        this.aimAngle = -Math.PI / 2; // default: up
+
+        // Mouse state
+        this._mouseX = 0;
+        this._mouseY = 0;
+        this._mouseDown = false;
+        this._onMouseMove = (e) => {
+            this._mouseX = e.clientX;
+            this._mouseY = e.clientY;
+        };
+        this._onMouseDown = (e) => {
+            if (e.button === 0) this._mouseDown = true;
+        };
+        this._onMouseUp = (e) => {
+            if (e.button === 0) this._mouseDown = false;
+        };
+        window.addEventListener('mousemove', this._onMouseMove);
+        window.addEventListener('mousedown', this._onMouseDown);
+        window.addEventListener('mouseup', this._onMouseUp);
+
         // Asset loading state
         this.assetsLoaded = false;
     }
@@ -225,16 +258,88 @@ export class GameManager {
     sendInput() {
         if (!window.VELLA.ws?.isConnected) return;
 
-        const input = this.joystick.getInput();
+        // Joystick input (mobile)
+        const joy = this.joystick ? this.joystick.getInput() : { moveX: 0, moveY: 0, aimX: 0, aimY: 0, shooting: false };
+
+        // Keyboard movement: WASD
+        let kbMoveX = 0, kbMoveY = 0;
+        if (this.keys['KeyW']) kbMoveY -= 1;
+        if (this.keys['KeyS']) kbMoveY += 1;
+        if (this.keys['KeyA']) kbMoveX -= 1;
+        if (this.keys['KeyD']) kbMoveX += 1;
+        if (kbMoveX !== 0 && kbMoveY !== 0) {
+            const len = Math.sqrt(kbMoveX * kbMoveX + kbMoveY * kbMoveY);
+            kbMoveX /= len;
+            kbMoveY /= len;
+        }
+
+        // Mouse aim: calculate angle from player to cursor
+        let mouseAimX = 0, mouseAimY = 0;
+        let hasMouseAim = false;
+        const me = this.players[this.myId];
+        if (me && this.scene) {
+            const canvas = this.game.canvas;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const cx = (this._mouseX - rect.left) * scaleX;
+            const cy = (this._mouseY - rect.top) * scaleY;
+            const dx = cx - me.sprite.x;
+            const dy = cy - me.sprite.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 5) {
+                mouseAimX = dx / len;
+                mouseAimY = dy / len;
+                hasMouseAim = true;
+            }
+        }
+
+        // Keyboard aim: Arrow keys
+        const aimSpeed = 0.06;
+        if (this.keys['ArrowLeft']) this.aimAngle -= aimSpeed;
+        if (this.keys['ArrowRight']) this.aimAngle += aimSpeed;
+        if (this.keys['ArrowUp']) this.aimAngle = -Math.PI / 2;
+        if (this.keys['ArrowDown']) this.aimAngle = Math.PI / 2;
+
+        const kbShooting = !!this.keys['Slash'] || !!this.keys['Space'];
+        const hasKeyboard = kbMoveX !== 0 || kbMoveY !== 0 || kbShooting ||
+            this.keys['ArrowLeft'] || this.keys['ArrowRight'] ||
+            this.keys['ArrowUp'] || this.keys['ArrowDown'];
+
+        // Combine inputs: mouse aim > keyboard aim > joystick
+        const moveX = (kbMoveX !== 0 || kbMoveY !== 0) ? kbMoveX : joy.moveX;
+        const moveY = (kbMoveX !== 0 || kbMoveY !== 0) ? kbMoveY : joy.moveY;
+        const shooting = this._mouseDown || kbShooting || joy.shooting;
+
+        let aimX, aimY;
+        if (hasMouseAim) {
+            aimX = mouseAimX;
+            aimY = mouseAimY;
+        } else if (hasKeyboard) {
+            aimX = Math.cos(this.aimAngle);
+            aimY = Math.sin(this.aimAngle);
+        } else if (joy.aimX !== 0 || joy.aimY !== 0) {
+            aimX = joy.aimX;
+            aimY = joy.aimY;
+        } else if (Math.abs(moveX) > 0.1 || Math.abs(moveY) > 0.1) {
+            const len = Math.sqrt(moveX * moveX + moveY * moveY);
+            aimX = moveX / len;
+            aimY = moveY / len;
+        } else {
+            aimX = this._lastAimX || 0;
+            aimY = this._lastAimY || -1;
+        }
+        this._lastAimX = aimX;
+        this._lastAimY = aimY;
 
         window.VELLA.ws.send({
             type: 'input',
             seq: ++this.inputSeq,
-            move_x: input.moveX,
-            move_y: input.moveY,
-            aim_x: input.aimX,
-            aim_y: input.aimY,
-            shooting: input.shooting,
+            move_x: moveX,
+            move_y: moveY,
+            aim_x: aimX,
+            aim_y: aimY,
+            shooting: shooting,
             reload: false
         });
     }
@@ -747,6 +852,12 @@ export class GameManager {
     }
 
     destroy() {
+        window.removeEventListener('keydown', this._onKeyDown);
+        window.removeEventListener('keyup', this._onKeyUp);
+        window.removeEventListener('mousemove', this._onMouseMove);
+        window.removeEventListener('mousedown', this._onMouseDown);
+        window.removeEventListener('mouseup', this._onMouseUp);
+
         if (this.joystick) {
             this.joystick.destroy();
             this.joystick = null;
