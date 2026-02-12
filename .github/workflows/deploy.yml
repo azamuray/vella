@@ -19,4 +19,4 @@ jobs:
             cd /root/vella
             git pull origin main
             docker compose up -d --build
-            echo "✅ Deployed at $(date)"
+            echo "✅ Deploy complete at $(date)"
