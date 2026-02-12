@@ -674,6 +674,23 @@ async def websocket_endpoint(
                         "reason": str(e),
                     })
 
+            elif msg_type == "collect_all_buildings" and player_mode == "world" and world_player:
+                try:
+                    from .game.rpg.building_routes import _collect_all_buildings_from_world
+                    result = await _collect_all_buildings_from_world(
+                        telegram_id, world_player
+                    )
+                    await websocket.send_json({
+                        "type": "all_buildings_collected",
+                        **result,
+                    })
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": "all_buildings_collected",
+                        "success": False,
+                        "reason": str(e),
+                    })
+
             elif msg_type == "pickup_drop" and player_mode == "world" and world_player:
                 drop_id = data.get("drop_id")
                 if drop_id is not None:

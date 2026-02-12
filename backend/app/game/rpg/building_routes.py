@@ -109,6 +109,8 @@ async def get_clan_buildings(
             "is_built": is_built,
             "build_progress": _build_progress(b),
             "produces_resource": bt.produces_resource,
+            "production_rate": bt.production_rate,
+            "storage_capacity": getattr(bt, 'storage_capacity', 0),
             "produced_amount": produced,
         })
 
@@ -218,6 +220,7 @@ async def collect_production(
         select(Building)
         .options(selectinload(Building.building_type))
         .where(Building.id == building_id, Building.clan_id == membership.clan_id)
+        .with_for_update()
     )
     building = result.scalar_one_or_none()
     if not building:
@@ -231,9 +234,11 @@ async def collect_production(
     if building.build_complete and building.build_complete > datetime.utcnow():
         raise HTTPException(status_code=400, detail="Ещё строится")
 
-    # Calculate produced
-    hours_since = (datetime.utcnow() - building.last_collected).total_seconds() / 3600
-    produced = int(hours_since * bt.production_rate)
+    # Calculate produced (capped at storage)
+    from .production import calculate_production
+    prod = calculate_production(building.last_collected, bt.production_rate,
+                                getattr(bt, 'storage_capacity', 0))
+    produced = prod["produced"]
 
     if produced <= 0:
         raise HTTPException(status_code=400, detail="Пока нечего собирать")
@@ -356,6 +361,7 @@ async def move_building(
 async def _collect_building_from_world(player_id: int, building_id: int, world_player) -> dict:
     """Collect resources from a production building (called from WebSocket handler)."""
     from ...database import async_session as _async_session
+    from .production import calculate_production
 
     async with _async_session() as db:
         # Verify player is in a clan
@@ -366,11 +372,12 @@ async def _collect_building_from_world(player_id: int, building_id: int, world_p
         if not membership:
             return {"success": False, "reason": "not_in_clan"}
 
-        # Get the building
+        # Get the building with row lock to prevent double-collection
         result = await db.execute(
             select(Building)
             .options(selectinload(Building.building_type))
             .where(Building.id == building_id, Building.clan_id == membership.clan_id)
+            .with_for_update()
         )
         building = result.scalar_one_or_none()
         if not building:
@@ -384,9 +391,10 @@ async def _collect_building_from_world(player_id: int, building_id: int, world_p
         if building.build_complete and building.build_complete > datetime.utcnow():
             return {"success": False, "reason": "not_built"}
 
-        # Calculate produced
-        hours_since = (datetime.utcnow() - building.last_collected).total_seconds() / 3600
-        produced = int(hours_since * bt.production_rate)
+        # Calculate produced (capped at storage)
+        prod = calculate_production(building.last_collected, bt.production_rate,
+                                    getattr(bt, 'storage_capacity', 0))
+        produced = prod["produced"]
         if produced <= 0:
             return {"success": False, "reason": "nothing_ready"}
 
@@ -397,11 +405,79 @@ async def _collect_building_from_world(player_id: int, building_id: int, world_p
         building.last_collected = datetime.utcnow()
         await db.commit()
 
+        # Refresh buildings so all clients see updated last_collected_ts
+        result2 = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
+        clan = result2.scalar_one_or_none()
+        if clan:
+            await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
+
         return {
             "success": True,
             "resource": resource,
             "amount": produced,
             "building_name": bt.name,
+        }
+
+
+async def _collect_all_buildings_from_world(player_id: int, world_player) -> dict:
+    """Collect resources from ALL production buildings in player's clan."""
+    from ...database import async_session as _async_session
+    from .production import calculate_production
+
+    async with _async_session() as db:
+        result = await db.execute(
+            select(ClanMember).where(ClanMember.player_id == player_id)
+        )
+        membership = result.scalar_one_or_none()
+        if not membership:
+            return {"success": False, "reason": "not_in_clan"}
+
+        # Lock all buildings for this clan
+        result = await db.execute(
+            select(Building)
+            .options(selectinload(Building.building_type))
+            .where(Building.clan_id == membership.clan_id)
+            .with_for_update()
+        )
+
+        now = datetime.utcnow()
+        total_collected = {}
+        buildings_collected = 0
+
+        for building in result.scalars().all():
+            bt = building.building_type
+            if not bt.produces_resource or bt.production_rate <= 0:
+                continue
+            if building.build_complete and building.build_complete > now:
+                continue
+
+            prod = calculate_production(building.last_collected, bt.production_rate,
+                                        getattr(bt, 'storage_capacity', 0))
+            if prod["produced"] <= 0:
+                continue
+
+            resource = bt.produces_resource
+            amount = prod["produced"]
+            world_player.collect_resource(resource, amount)
+            total_collected[resource] = total_collected.get(resource, 0) + amount
+            building.last_collected = now
+            buildings_collected += 1
+
+        await db.commit()
+
+        if buildings_collected == 0:
+            return {"success": False, "reason": "nothing_ready"}
+
+        # Refresh buildings
+        result2 = await db.execute(select(Clan).where(Clan.id == membership.clan_id))
+        clan = result2.scalar_one_or_none()
+        if clan:
+            await world_engine.refresh_buildings_for_base(clan.base_x, clan.base_y)
+
+        return {
+            "success": True,
+            "collected": total_collected,
+            "buildings_count": buildings_collected,
         }
 
 

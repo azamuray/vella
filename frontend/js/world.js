@@ -269,6 +269,14 @@ export class WorldGameManager {
             }
         }
 
+        // Update production indicators (every 1 second)
+        if (this._prodTimer === undefined) this._prodTimer = 0;
+        this._prodTimer += delta;
+        if (this._prodTimer > 1000) {
+            this._prodTimer = 0;
+            this.updateProductionIndicators();
+        }
+
         // Update minimap
         this.updateMinimap();
 
@@ -713,6 +721,41 @@ export class WorldGameManager {
             sprites.push(hb);
         }
 
+        // Production indicator for production buildings
+        if (b.produces_resource && b.production_rate > 0 && b.is_built && b.last_collected_ts) {
+            const RESOURCE_ICONS = {
+                metal: '\u26cf\ufe0f', wood: '\ud83e\udeb5', food: '\ud83c\udf3e',
+                ammo: '\ud83d\udce6', meds: '\ud83d\udc8a',
+            };
+            const barWidth = b.width;
+            const barY = b.y + b.height + 14;
+
+            // Progress bar background
+            const progressBg = this.scene.add.graphics().setDepth(4);
+            progressBg.fillStyle(0x000000, 0.5);
+            progressBg.fillRect(b.x, barY, barWidth, 4);
+            sprites.push(progressBg);
+
+            // Progress bar fill (updated each second)
+            const progressFill = this.scene.add.graphics().setDepth(4);
+            sprites.push(progressFill);
+
+            // Amount text
+            const amountText = this.scene.add.text(cx, barY + 10, '', {
+                fontSize: '8px', fontFamily: 'Arial', color: '#ffd700',
+                stroke: '#000', strokeThickness: 2,
+            }).setOrigin(0.5).setDepth(4);
+            sprites.push(amountText);
+
+            if (!this._productionBuildings) this._productionBuildings = {};
+            this._productionBuildings[b.id] = {
+                building: b, progressBg, progressFill, amountText,
+                barX: b.x, barY, barWidth, cx,
+                icon: RESOURCE_ICONS[b.produces_resource] || '?',
+                _glowSprite: null,
+            };
+        }
+
         return sprites;
     }
 
@@ -732,6 +775,9 @@ export class WorldGameManager {
         const key = `${data.chunk_x},${data.chunk_y}`;
         const chunk = this.chunks[key];
         if (!chunk) return;
+
+        // Cleanup old production building references
+        this._cleanupProductionBuildings(chunk._buildings);
 
         // Cleanup old turret barrel references
         this._cleanupChunkTurretBarrels(chunk._buildings);
@@ -761,6 +807,7 @@ export class WorldGameManager {
         const chunk = this.chunks[key];
         if (!chunk) return;
 
+        this._cleanupProductionBuildings(chunk._buildings);
         this._cleanupChunkTurretBarrels(chunk._buildings);
         chunk.sprite.destroy();
         this.scene.textures.remove(chunk.textureKey);
@@ -774,6 +821,66 @@ export class WorldGameManager {
             }
         }
         delete this.chunks[key];
+    }
+
+    // ===== Production indicators =====
+
+    updateProductionIndicators() {
+        if (!this._productionBuildings) return;
+        const now = Date.now() / 1000;
+
+        for (const [id, info] of Object.entries(this._productionBuildings)) {
+            const b = info.building;
+            if (!b.last_collected_ts || !b.production_rate) continue;
+
+            const hoursSince = (now - b.last_collected_ts) / 3600;
+            const rawProduced = hoursSince * b.production_rate;
+            const cap = b.building?.storage_capacity || b.storage_capacity || 999999;
+            const produced = Math.min(Math.floor(rawProduced), cap);
+            const fillRatio = Math.min(1.0, rawProduced / cap);
+
+            // Update progress bar
+            info.progressFill.clear();
+            const barColor = fillRatio >= 1.0 ? 0xef4444 : (fillRatio > 0.7 ? 0xfbbf24 : 0x4ade80);
+            info.progressFill.fillStyle(barColor, 0.9);
+            info.progressFill.fillRect(info.barX, info.barY, info.barWidth * fillRatio, 4);
+
+            // Update amount text
+            const text = fillRatio >= 1.0
+                ? `${info.icon} ${produced} MAX`
+                : `${info.icon} ${produced}/${cap}`;
+            info.amountText.setText(text);
+
+            // Glow when full
+            if (fillRatio >= 1.0 && !info._glowSprite) {
+                const gcx = b.x + b.width / 2;
+                const gcy = b.y + b.height / 2;
+                const glow = this.scene.add.circle(gcx, gcy, Math.max(b.width, b.height) * 0.7, 0xffd700, 0.15);
+                glow.setDepth(2.5);
+                this.scene.tweens.add({
+                    targets: glow,
+                    alpha: { from: 0.08, to: 0.25 },
+                    duration: 1000,
+                    yoyo: true,
+                    repeat: -1,
+                });
+                info._glowSprite = glow;
+            } else if (fillRatio < 1.0 && info._glowSprite) {
+                info._glowSprite.destroy();
+                info._glowSprite = null;
+            }
+        }
+    }
+
+    _cleanupProductionBuildings(buildings) {
+        if (!buildings || !this._productionBuildings) return;
+        for (const b of buildings) {
+            const info = this._productionBuildings[b.id];
+            if (info) {
+                if (info._glowSprite) info._glowSprite.destroy();
+                delete this._productionBuildings[b.id];
+            }
+        }
     }
 
     // ===== Minimap =====
@@ -817,7 +924,13 @@ export class WorldGameManager {
             for (const b of chunk._buildings) {
                 const p = toMini(b.x + b.width / 2, b.y + b.height / 2);
                 if (p.x < 0 || p.x >= MINIMAP_SIZE || p.y < 0 || p.y >= MINIMAP_SIZE) continue;
-                ctx.fillStyle = b.category === 'defense' ? '#ff4444' : (b.category === 'production' ? '#fbbf24' : '#60a5fa');
+                if (b.category === 'production' && b.last_collected_ts && b.production_rate > 0) {
+                    const hrsSince = (Date.now() / 1000 - b.last_collected_ts) / 3600;
+                    const fill = Math.min(1.0, (hrsSince * b.production_rate) / (b.storage_capacity || 1));
+                    ctx.fillStyle = fill >= 1.0 ? '#ef4444' : (fill > 0.5 ? '#fbbf24' : '#4ade80');
+                } else {
+                    ctx.fillStyle = b.category === 'defense' ? '#ff4444' : (b.category === 'production' ? '#fbbf24' : '#60a5fa');
+                }
                 ctx.fillRect(p.x - 1, p.y - 1, 3, 3);
             }
         }
@@ -1344,16 +1457,42 @@ export class WorldGameManager {
         const info = document.getElementById('bp-info');
         const collectRow = document.getElementById('bp-collect-row');
         const collectAmount = document.getElementById('bp-collect-amount');
+        const collectAllRow = document.getElementById('bp-collect-all-row');
 
         title.textContent = b.type_name || b.type_code;
-        info.textContent = `HP: ${Math.round(b.hp)}/${b.max_hp}`;
 
-        // Show collect button for production buildings
-        if (b.category === 'production' && b.is_built) {
+        if (b.category === 'production' && b.is_built && b.produces_resource && b.last_collected_ts) {
+            const now = Date.now() / 1000;
+            const hoursSince = (now - b.last_collected_ts) / 3600;
+            const rawProduced = hoursSince * b.production_rate;
+            const cap = b.storage_capacity || 999999;
+            const produced = Math.min(Math.floor(rawProduced), cap);
+            const fillRatio = Math.min(1.0, rawProduced / cap);
+
+            let timeStr = '';
+            if (fillRatio < 1.0 && b.production_rate > 0) {
+                const secsToFull = ((cap - rawProduced) / b.production_rate) * 3600;
+                const h = Math.floor(secsToFull / 3600);
+                const m = Math.floor((secsToFull % 3600) / 60);
+                timeStr = h > 0 ? `${h}\u0447 ${m}\u043c \u0434\u043e \u043f\u043e\u043b\u043d\u043e\u0433\u043e` : `${m}\u043c \u0434\u043e \u043f\u043e\u043b\u043d\u043e\u0433\u043e`;
+            } else if (fillRatio >= 1.0) {
+                timeStr = '\u0425\u0440\u0430\u043d\u0438\u043b\u0438\u0449\u0435 \u043f\u043e\u043b\u043d\u043e\u0435!';
+            }
+
+            const RNAMES = { metal: '\u043c\u0435\u0442\u0430\u043b\u043b', wood: '\u0434\u0435\u0440\u0435\u0432\u043e', food: '\u0435\u0434\u0430', ammo: '\u043f\u0430\u0442\u0440\u043e\u043d\u044b', meds: '\u043c\u0435\u0434\u0438\u043a\u0430\u043c\u0435\u043d\u0442\u044b' };
+            const rname = RNAMES[b.produces_resource] || b.produces_resource;
+            info.innerHTML = `HP: ${Math.round(b.hp)}/${b.max_hp}<br>` +
+                `\u041f\u0440\u043e\u0438\u0437\u0432\u043e\u0434\u0438\u0442: ${rname} (${b.production_rate}/\u0447)<br>` +
+                `\u0425\u0440\u0430\u043d\u0438\u043b\u0438\u0449\u0435: ${produced}/${cap}<br>` +
+                `<span style="color: ${fillRatio >= 1 ? '#ef4444' : '#4ade80'}">${timeStr}</span>`;
+
             collectRow.classList.remove('hidden');
-            collectAmount.textContent = '...';
+            collectAmount.textContent = produced;
+            if (collectAllRow) collectAllRow.classList.remove('hidden');
         } else {
+            info.textContent = `HP: ${Math.round(b.hp)}/${b.max_hp}`;
             collectRow.classList.add('hidden');
+            if (collectAllRow) collectAllRow.classList.add('hidden');
         }
 
         panel.classList.remove('hidden');
@@ -1397,28 +1536,53 @@ export class WorldGameManager {
             this._startBuildingMove(this._selectedBuilding);
         });
 
+        // Collect all button
+        const collectAll = document.getElementById('bp-collect-all');
+        if (collectAll) collectAll.addEventListener('click', () => {
+            window.VELLA.ws.send({
+                type: 'collect_all_buildings',
+            });
+            document.getElementById('building-panel').classList.add('hidden');
+        });
+
         // Listen for server responses
         window.VELLA.ws.on('building_collected', (data) => {
             if (data.success) {
                 this.showFloatingText(`+${data.amount} ${data.resource}`, 0x4ade80);
             } else {
-                this.showFloatingText(data.reason || 'Нечего собирать', 0xff4444);
+                this.showFloatingText(data.reason || '\u041d\u0435\u0447\u0435\u0433\u043e \u0441\u043e\u0431\u0438\u0440\u0430\u0442\u044c', 0xff4444);
+            }
+        });
+
+        window.VELLA.ws.on('all_buildings_collected', (data) => {
+            if (data.success) {
+                const parts = [];
+                for (const [res, amt] of Object.entries(data.collected)) {
+                    parts.push(`+${amt} ${res}`);
+                }
+                this.showFloatingText(parts.join('  '), 0x4ade80);
+            } else {
+                this.showFloatingText(data.reason || '\u041d\u0435\u0447\u0435\u0433\u043e \u0441\u043e\u0431\u0438\u0440\u0430\u0442\u044c', 0xff4444);
             }
         });
 
         window.VELLA.ws.on('building_demolished', (data) => {
             if (data.success) {
-                this.showFloatingText('Здание снесено', 0xfbbf24);
+                this.showFloatingText('\u0417\u0434\u0430\u043d\u0438\u0435 \u0441\u043d\u0435\u0441\u0435\u043d\u043e', 0xfbbf24);
             }
         });
 
         window.VELLA.ws.on('building_moved', (data) => {
             if (data.success) {
-                this.showFloatingText('Здание перемещено', 0x60a5fa);
+                this.showFloatingText('\u0417\u0434\u0430\u043d\u0438\u0435 \u043f\u0435\u0440\u0435\u043c\u0435\u0449\u0435\u043d\u043e', 0x60a5fa);
             } else {
-                this.showFloatingText(data.reason || 'Ошибка', 0xff4444);
+                this.showFloatingText(data.reason || '\u041e\u0448\u0438\u0431\u043a\u0430', 0xff4444);
             }
             this._movingBuilding = null;
+        });
+
+        window.VELLA.ws.on('storage_full_notification', (data) => {
+            this.showFloatingText(`${data.building_name}: \u0445\u0440\u0430\u043d\u0438\u043b\u0438\u0449\u0435 \u043f\u043e\u043b\u043d\u043e\u0435! (${data.resource})`, 0xfbbf24);
         });
     }
 

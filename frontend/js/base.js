@@ -128,9 +128,11 @@ export class BaseManager {
             }
 
             if (b.produced_amount > 0) {
-                ctx.fillStyle = '#ffd700';
+                const cap = b.storage_capacity || 0;
+                ctx.fillStyle = (cap > 0 && b.produced_amount >= cap) ? '#ef4444' : '#ffd700';
                 ctx.font = 'bold 11px Arial';
-                ctx.fillText(`+${b.produced_amount}`, x + w / 2, y + h / 2 + 10);
+                const label = cap > 0 ? `${b.produced_amount}/${cap}` : `+${b.produced_amount}`;
+                ctx.fillText(label, x + w / 2, y + h / 2 + 10);
             }
         }
     }

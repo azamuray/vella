@@ -71,6 +71,7 @@ BUILDING_TYPES = [
         "width": 2, "height": 2,
         "max_hp": 200,
         "produces_resource": "metal", "production_rate": 10,  # per hour
+        "storage_capacity": 100,
         "cost_metal": 30, "cost_wood": 50,
         "build_time": 180
     },
@@ -81,6 +82,7 @@ BUILDING_TYPES = [
         "width": 2, "height": 2,
         "max_hp": 150,
         "produces_resource": "wood", "production_rate": 15,
+        "storage_capacity": 150,
         "cost_metal": 20, "cost_wood": 30,
         "build_time": 120
     },
@@ -91,6 +93,7 @@ BUILDING_TYPES = [
         "width": 3, "height": 2,
         "max_hp": 100,
         "produces_resource": "food", "production_rate": 8,
+        "storage_capacity": 80,
         "cost_wood": 40,
         "build_time": 150
     },
@@ -101,6 +104,7 @@ BUILDING_TYPES = [
         "width": 2, "height": 2,
         "max_hp": 200,
         "produces_resource": "ammo", "production_rate": 5,
+        "storage_capacity": 50,
         "cost_metal": 80, "cost_wood": 30,
         "build_time": 240
     },
@@ -111,6 +115,7 @@ BUILDING_TYPES = [
         "width": 2, "height": 2,
         "max_hp": 150,
         "produces_resource": "meds", "production_rate": 2,
+        "storage_capacity": 20,
         "cost_metal": 40, "cost_food": 20,
         "build_time": 200
     },
@@ -147,15 +152,20 @@ BUILDING_TYPES = [
 
 
 async def seed_building_types(db):
-    """Заполнить таблицу типов зданий"""
+    """Заполнить таблицу типов зданий (insert new, update existing)"""
     from ...models import BuildingType
 
     for bt_data in BUILDING_TYPES:
-        existing = await db.execute(
+        result = await db.execute(
             select(BuildingType).where(BuildingType.code == bt_data["code"])
         )
-        if existing.scalar_one_or_none() is None:
+        row = result.scalar_one_or_none()
+        if row is None:
             bt = BuildingType(**bt_data)
             db.add(bt)
+        else:
+            for key, value in bt_data.items():
+                if hasattr(row, key):
+                    setattr(row, key, value)
 
     await db.commit()

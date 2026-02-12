@@ -115,6 +115,9 @@ class WorldEngine:
         self._walls_dirty_chunks: Set[Tuple[int, int]] = set()
         self._wall_hp_sync: Dict[int, float] = {}  # wall_id -> accumulated damage for DB sync
 
+        # Storage full notification tracking (avoid spam)
+        self._notified_storage: Set[int] = set()  # building_ids already notified
+
     async def start(self):
         if self.running:
             return
@@ -297,6 +300,10 @@ class WorldEngine:
         # Process wall destruction + notify clients
         if self._walls_to_destroy or self._walls_dirty_chunks:
             await self._sync_wall_damage()
+
+        # Check production storage full (every ~10s)
+        if tick % 200 == 50:
+            await self._check_production_storage_full()
 
         # Unload stale chunks
         if tick % 60 == 0:  # every 3s
@@ -657,6 +664,41 @@ class WorldEngine:
                    if now - d["created_at"] > 60]
         for did in expired:
             del self.ground_drops[did]
+
+    async def _check_production_storage_full(self):
+        """Send one-time notification when a production building's storage is full."""
+        now = time.time()
+        for chunk in self.chunks.values():
+            for b in chunk.buildings:
+                if b.get('category') != 'production' or not b.get('last_collected_ts'):
+                    continue
+                rate = b.get('production_rate', 0)
+                cap = b.get('storage_capacity', 0)
+                if rate <= 0 or cap <= 0:
+                    continue
+
+                hours = (now - b['last_collected_ts']) / 3600
+                fill = (hours * rate) / cap
+
+                bld_id = b['id']
+                if fill >= 1.0:
+                    if bld_id not in self._notified_storage:
+                        self._notified_storage.add(bld_id)
+                        clan_id = b.get('clan_id')
+                        if clan_id:
+                            for p in self.players.values():
+                                if self._player_clans.get(p.id) == clan_id:
+                                    try:
+                                        await p.ws.send_json({
+                                            "type": "storage_full_notification",
+                                            "building_id": bld_id,
+                                            "building_name": b.get('type_name', ''),
+                                            "resource": b.get('produces_resource', ''),
+                                        })
+                                    except Exception:
+                                        pass
+                else:
+                    self._notified_storage.discard(bld_id)
 
     async def _manage_chunks(self):
         """Load/unload chunks based on player positions."""

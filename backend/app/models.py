@@ -105,6 +105,7 @@ class BuildingType(Base):
     # Production (for mines/farms)
     produces_resource = Column(String(16), nullable=True)  # metal, wood, food, ammo, meds
     production_rate = Column(Float, default=0)  # per hour
+    storage_capacity = Column(Integer, default=0)  # max stored resources
 
     # Combat (for turrets)
     damage = Column(Integer, default=0)

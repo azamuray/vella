@@ -353,6 +353,15 @@ async def load_buildings_for_chunk(chunk_x: int, chunk_y: int) -> list:
                 world_x = clan.base_x - 8 * TILE_SIZE + building.grid_x * TILE_SIZE
                 world_y = clan.base_y - 8 * TILE_SIZE + building.grid_y * TILE_SIZE
 
+                # last_collected timestamp for client-side production calc
+                lc_ts = None
+                if building.last_collected:
+                    lc = building.last_collected
+                    if lc.tzinfo is None:
+                        lc_ts = lc.replace(tzinfo=timezone.utc).timestamp()
+                    else:
+                        lc_ts = lc.timestamp()
+
                 buildings.append({
                     "id": building.id,
                     "clan_id": clan.id,
@@ -367,6 +376,10 @@ async def load_buildings_for_chunk(chunk_x: int, chunk_y: int) -> list:
                     "max_hp": bt.max_hp,
                     "is_built": is_built,
                     "clan_name": clan.name,
+                    "produces_resource": bt.produces_resource,
+                    "production_rate": bt.production_rate,
+                    "storage_capacity": getattr(bt, 'storage_capacity', 0),
+                    "last_collected_ts": lc_ts,
                 })
 
         return buildings
